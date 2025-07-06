@@ -10,12 +10,10 @@ module API
   , unwrapDateTime
   ) where
 
-import API.Types
-import API.Client
-import API.UUID (SerializableUUID) as UUID
-import API.UUID (wrap, unwrap) as UUID
-import API.DateTime (SerializableDateTime) as DateTime 
-import API.DateTime (wrap, unwrap) as DateTime
+import API.Types (Flashcard(..), ReviewResult(..), Stats(..))
+import API.Client (baseUrl, createCard, deleteCard, getAllCards, getReviewQueue, getStats, handleDecodeResult, handleJsonResponse, submitReview, updateCard)
+import API.UUID (SerializableUUID, wrap, unwrap) as UUID
+import API.DateTime (SerializableDateTime, wrap, unwrap) as DateTime 
 import Data.UUID (UUID)
 import Data.DateTime (DateTime)
 

@@ -2,20 +2,16 @@ module API.Client where
 
 import Prelude
 
-import API.Types (Flashcard(..), ReviewResult(..), Stats(..))
+import API.Types (Flashcard(..), ReviewResult, Stats)
 import API.UUID (SerializableUUID)
-import API.UUID as UUID
-import Data.Argonaut.Decode (decodeJson, JsonDecodeError, printJsonDecodeError)
-import Data.Argonaut.Encode (encodeJson)
-import Data.Argonaut.Parser (jsonParser)
+import API.UUID (unwrap) as UUID
 import Data.Argonaut.Core (Json, stringify)
+import Data.Argonaut.Decode (decodeJson, JsonDecodeError, printJsonDecodeError)
+import Data.Argonaut.Encode (encodeJson, toJsonString)
+import Data.Argonaut.Parser (jsonParser)
 import Data.Either (Either(..), either)
-import Data.Maybe (Maybe(..))
-import Data.UUID (UUID)
-import Data.UUID as UUID
+import Data.UUID (toString) as UUID
 import Effect.Aff (Aff)
-import Effect.Exception (Error, error)
-import Effect.Class (liftEffect)
 import Fetch (fetch, Method(..), Response)
 
 -- Base API URL
@@ -50,7 +46,7 @@ createCard card = do
   let opts = 
         { method: POST
         , headers: { "Content-Type": "application/json" }
-        , body: stringify (encodeJson card)
+        , body: toJsonString card
         }
   response <- fetch (baseUrl <> "/cards") opts
   handleJsonResponse decodeJson response
@@ -62,7 +58,7 @@ updateCard card@(Flashcard c) = do
       opts = 
         { method: PUT
         , headers: { "Content-Type": "application/json" }
-        , body: stringify (encodeJson card)
+        , body: toJsonString card
         }
   response <- fetch (baseUrl <> "/cards/" <> idString) opts
   handleJsonResponse decodeJson response
@@ -90,7 +86,7 @@ submitReview id result = do
       opts = 
         { method: POST
         , headers: { "Content-Type": "application/json" }
-        , body: stringify (encodeJson result)
+        , body: toJsonString result
         }
   response <- fetch (baseUrl <> "/review/" <> idString) opts
   if response.ok

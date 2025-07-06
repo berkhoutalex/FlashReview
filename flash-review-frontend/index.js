@@ -863,9 +863,6 @@
   var to = function(dict) {
     return dict.to;
   };
-  var from = function(dict) {
-    return dict.from;
-  };
 
   // output/Data.Maybe/index.js
   var identity3 = /* @__PURE__ */ identity(categoryFn);
@@ -9035,71 +9032,7 @@
     };
   };
 
-  // output/Data.Argonaut.Encode.Generic/index.js
-  var encodeRepWith = function(dict) {
-    return dict.encodeRepWith;
-  };
-  var genericEncodeJsonWith = function(dictGeneric) {
-    var from3 = from(dictGeneric);
-    return function(dictEncodeRep) {
-      var encodeRepWith1 = encodeRepWith(dictEncodeRep);
-      return function(e) {
-        var $73 = encodeRepWith1(e);
-        return function($74) {
-          return $73(from3($74));
-        };
-      };
-    };
-  };
-  var genericEncodeJson = function(dictGeneric) {
-    var genericEncodeJsonWith1 = genericEncodeJsonWith(dictGeneric);
-    return function(dictEncodeRep) {
-      return genericEncodeJsonWith1(dictEncodeRep)(defaultEncoding);
-    };
-  };
-  var encodeRepArgsArgument = function(dictEncodeJson) {
-    var encodeJson3 = encodeJson(dictEncodeJson);
-    return {
-      encodeRepArgs: function(v) {
-        return [encodeJson3(v)];
-      }
-    };
-  };
-  var encodeRepArgs = function(dict) {
-    return dict.encodeRepArgs;
-  };
-  var encodeRepConstructor = function(dictIsSymbol) {
-    var reflectSymbol2 = reflectSymbol(dictIsSymbol);
-    return function(dictEncodeRepArgs) {
-      var encodeRepArgs1 = encodeRepArgs(dictEncodeRepArgs);
-      return {
-        encodeRepWith: function(e) {
-          return function(v) {
-            var values = function() {
-              var vs = encodeRepArgs1(v);
-              if (e.unwrapSingleArguments) {
-                if (vs.length === 1) {
-                  return vs[0];
-                }
-                ;
-                return id(vs);
-              }
-              ;
-              return id(vs);
-            }();
-            return id(insert2(e.tagKey)(id(reflectSymbol2($$Proxy.value)))(insert2(e.valuesKey)(values)(empty2)));
-          };
-        }
-      };
-    };
-  };
-
   // output/API.Types/index.js
-  var StatsIsSymbol = {
-    reflectSymbol: function() {
-      return "Stats";
-    }
-  };
   var gEncodeJsonCons2 = /* @__PURE__ */ gEncodeJsonCons(encodeJsonInt);
   var gEncodeJsonCons1 = /* @__PURE__ */ gEncodeJsonCons2(gEncodeJsonNil);
   var dueTodayIsSymbol = {
@@ -9107,21 +9040,12 @@
       return "dueToday";
     }
   };
-  var ReviewResultIsSymbol = {
-    reflectSymbol: function() {
-      return "ReviewResult";
-    }
-  };
   var ratingIsSymbol = {
     reflectSymbol: function() {
       return "rating";
     }
   };
-  var FlashcardIsSymbol = {
-    reflectSymbol: function() {
-      return "Flashcard";
-    }
-  };
+  var encodeJson1 = /* @__PURE__ */ encodeJson(/* @__PURE__ */ encodeRecord(/* @__PURE__ */ gEncodeJsonCons1(ratingIsSymbol)())());
   var gEncodeJsonCons22 = /* @__PURE__ */ gEncodeJsonCons(encodeJsonJString);
   var repetitionsIsSymbol = {
     reflectSymbol: function() {
@@ -9158,18 +9082,11 @@
       return "back";
     }
   };
+  var encodeJson2 = /* @__PURE__ */ encodeJson(/* @__PURE__ */ encodeRecord(/* @__PURE__ */ gEncodeJsonCons22(/* @__PURE__ */ gEncodeJsonCons(encodeJsonJNumber)(/* @__PURE__ */ gEncodeJsonCons22(/* @__PURE__ */ gEncodeJsonCons(encodeJsonSerializableUUID)(/* @__PURE__ */ gEncodeJsonCons2(/* @__PURE__ */ gEncodeJsonCons(encodeJsonSerializableDateTime)(/* @__PURE__ */ gEncodeJsonCons1(repetitionsIsSymbol)())(nextReviewIsSymbol)())(intervalIsSymbol)())(idIsSymbol)())(frontIsSymbol)())(easeFactorIsSymbol)())(backIsSymbol)())());
   var gDecodeJsonCons2 = /* @__PURE__ */ gDecodeJsonCons(/* @__PURE__ */ decodeFieldId(decodeJsonInt));
   var gDecodeJsonCons1 = /* @__PURE__ */ gDecodeJsonCons2(gDecodeJsonNil);
   var gDecodeJsonCons22 = /* @__PURE__ */ gDecodeJsonCons(/* @__PURE__ */ decodeFieldId(decodeJsonString));
   var genericStats = {
-    to: function(x) {
-      return x;
-    },
-    from: function(x) {
-      return x;
-    }
-  };
-  var genericReviewResult = {
     to: function(x) {
       return x;
     },
@@ -9186,16 +9103,36 @@
     }
   };
   var encodeJsonReviewResult = {
-    encodeJson: /* @__PURE__ */ genericEncodeJson(genericReviewResult)(/* @__PURE__ */ encodeRepConstructor(ReviewResultIsSymbol)(/* @__PURE__ */ encodeRepArgsArgument(/* @__PURE__ */ encodeRecord(/* @__PURE__ */ gEncodeJsonCons1(ratingIsSymbol)())())))
+    encodeJson: function(v) {
+      return encodeJson1(v);
+    }
   };
   var encodeJsonFlashcard = {
-    encodeJson: /* @__PURE__ */ genericEncodeJson(genericFlashcard)(/* @__PURE__ */ encodeRepConstructor(FlashcardIsSymbol)(/* @__PURE__ */ encodeRepArgsArgument(/* @__PURE__ */ encodeRecord(/* @__PURE__ */ gEncodeJsonCons22(/* @__PURE__ */ gEncodeJsonCons(encodeJsonJNumber)(/* @__PURE__ */ gEncodeJsonCons22(/* @__PURE__ */ gEncodeJsonCons(encodeJsonSerializableUUID)(/* @__PURE__ */ gEncodeJsonCons2(/* @__PURE__ */ gEncodeJsonCons(encodeJsonSerializableDateTime)(/* @__PURE__ */ gEncodeJsonCons1(repetitionsIsSymbol)())(nextReviewIsSymbol)())(intervalIsSymbol)())(idIsSymbol)())(frontIsSymbol)())(easeFactorIsSymbol)())(backIsSymbol)())())))
+    encodeJson: function(v) {
+      return encodeJson2(v);
+    }
   };
   var decodeJsonStats = {
-    decodeJson: /* @__PURE__ */ genericDecodeJson(genericStats)(/* @__PURE__ */ decodeRepConstructorArg(StatsIsSymbol)(/* @__PURE__ */ decodeRecord(/* @__PURE__ */ gDecodeJsonCons1(dueTodayIsSymbol)()())()))
+    decodeJson: /* @__PURE__ */ genericDecodeJson(genericStats)(/* @__PURE__ */ decodeRepConstructorArg({
+      reflectSymbol: function() {
+        return "Stats";
+      }
+    })(/* @__PURE__ */ decodeRecord(/* @__PURE__ */ gDecodeJsonCons1(dueTodayIsSymbol)()())()))
   };
   var decodeJsonFlashcard = {
-    decodeJson: /* @__PURE__ */ genericDecodeJson(genericFlashcard)(/* @__PURE__ */ decodeRepConstructorArg(FlashcardIsSymbol)(/* @__PURE__ */ decodeRecord(/* @__PURE__ */ gDecodeJsonCons22(/* @__PURE__ */ gDecodeJsonCons(/* @__PURE__ */ decodeFieldId(decodeJsonNumber))(/* @__PURE__ */ gDecodeJsonCons22(/* @__PURE__ */ gDecodeJsonCons(/* @__PURE__ */ decodeFieldId(decodeJsonSerializableUUID))(/* @__PURE__ */ gDecodeJsonCons2(/* @__PURE__ */ gDecodeJsonCons(/* @__PURE__ */ decodeFieldId(decodeJsonSerializableDateTime))(/* @__PURE__ */ gDecodeJsonCons1(repetitionsIsSymbol)()())(nextReviewIsSymbol)()())(intervalIsSymbol)()())(idIsSymbol)()())(frontIsSymbol)()())(easeFactorIsSymbol)()())(backIsSymbol)()())()))
+    decodeJson: /* @__PURE__ */ genericDecodeJson(genericFlashcard)(/* @__PURE__ */ decodeRepConstructorArg({
+      reflectSymbol: function() {
+        return "Flashcard";
+      }
+    })(/* @__PURE__ */ decodeRecord(/* @__PURE__ */ gDecodeJsonCons22(/* @__PURE__ */ gDecodeJsonCons(/* @__PURE__ */ decodeFieldId(decodeJsonNumber))(/* @__PURE__ */ gDecodeJsonCons22(/* @__PURE__ */ gDecodeJsonCons(/* @__PURE__ */ decodeFieldId(decodeJsonSerializableUUID))(/* @__PURE__ */ gDecodeJsonCons2(/* @__PURE__ */ gDecodeJsonCons(/* @__PURE__ */ decodeFieldId(decodeJsonSerializableDateTime))(/* @__PURE__ */ gDecodeJsonCons1(repetitionsIsSymbol)()())(nextReviewIsSymbol)()())(intervalIsSymbol)()())(idIsSymbol)()())(frontIsSymbol)()())(easeFactorIsSymbol)()())(backIsSymbol)()())()))
+  };
+
+  // output/Data.Argonaut.Encode/index.js
+  var toJsonString = function(dictEncodeJson) {
+    var $3 = encodeJson(dictEncodeJson);
+    return function($4) {
+      return stringify($3($4));
+    };
   };
 
   // output/Data.Argonaut.Parser/foreign.js
@@ -11029,7 +10966,7 @@
   var bind8 = /* @__PURE__ */ bind(bindAff);
   var pure7 = /* @__PURE__ */ pure(applicativeAff);
   var show7 = /* @__PURE__ */ show(showInt);
-  var encodeJson2 = /* @__PURE__ */ encodeJson(encodeJsonFlashcard);
+  var toJsonString2 = /* @__PURE__ */ toJsonString(encodeJsonFlashcard);
   var fetch3 = /* @__PURE__ */ fetch2()();
   var toCoreRequestOptionsRowRo2 = /* @__PURE__ */ toCoreRequestOptionsRowRo()();
   var toCoreRequestOptionsHelpe12 = /* @__PURE__ */ toCoreRequestOptionsHelpe1(toCoreRequestOptionsConve9)()()()({
@@ -11051,7 +10988,7 @@
   var fetch32 = /* @__PURE__ */ fetch3(/* @__PURE__ */ toCoreRequestOptionsRowRo2(toCoreRequestOptionsHelpe));
   var decodeJson1 = /* @__PURE__ */ decodeJson(/* @__PURE__ */ decodeArray2(decodeJsonFlashcard));
   var decodeJson22 = /* @__PURE__ */ decodeJson(decodeJsonStats);
-  var encodeJson1 = /* @__PURE__ */ encodeJson(encodeJsonReviewResult);
+  var toJsonString1 = /* @__PURE__ */ toJsonString(encodeJsonReviewResult);
   var handleDecodeResult = /* @__PURE__ */ function() {
     return either(function($59) {
       return Left.create(printJsonDecodeError($59));
@@ -11070,7 +11007,7 @@
             return pure7(handleDecodeResult(decoder(v.value0)));
           }
           ;
-          throw new Error("Failed pattern match at API.Client (line 35, column 7 - line 37, column 63): " + [v.constructor.name]);
+          throw new Error("Failed pattern match at API.Client (line 31, column 7 - line 33, column 63): " + [v.constructor.name]);
         });
       }
       ;
@@ -11084,7 +11021,7 @@
       headers: {
         "Content-Type": "application/json"
       },
-      body: stringify(encodeJson2(card))
+      body: toJsonString2(card)
     };
     return bind8(fetch1(baseUrl + "/cards")(opts))(function(response) {
       return handleJsonResponse(decodeJson2)(response);
@@ -11125,7 +11062,7 @@
         headers: {
           "Content-Type": "application/json"
         },
-        body: stringify(encodeJson1(result))
+        body: toJsonString1(result)
       };
       var idString = toString2(unwrap7(id3));
       return bind8(fetch1(baseUrl + ("/review/" + idString))(opts))(function(response) {
@@ -14546,7 +14483,7 @@
       }))])([text3("Cards due today: " + show9(v.value0.dueToday))])]);
     }
     ;
-    throw new Error("Failed pattern match at Components.Stats (line 75, column 1 - line 75, column 68): " + [v.constructor.name]);
+    throw new Error("Failed pattern match at Components.Stats (line 74, column 1 - line 74, column 68): " + [v.constructor.name]);
   };
   var render5 = function(state3) {
     return div3([style2(margin(px(20))(px(0))(px(20))(px(0)))])([h2([style2(color(rgb(33)(150)(243)))])([text3("Statistics")]), function() {
@@ -14562,7 +14499,7 @@
         return renderStats(state3.stats);
       }
       ;
-      throw new Error("Failed pattern match at Components.Stats (line 54, column 14 - line 60, column 45): " + [state3.error.constructor.name]);
+      throw new Error("Failed pattern match at Components.Stats (line 53, column 14 - line 59, column 45): " + [state3.error.constructor.name]);
     }(), button([onClick(function(v) {
       return RefreshStats.value;
     }), style2(discard14(marginTop(px(20)))(function() {
@@ -14633,12 +14570,12 @@
               });
             }
             ;
-            throw new Error("Failed pattern match at Components.Stats (line 101, column 5 - line 103, column 79): " + [result.constructor.name]);
+            throw new Error("Failed pattern match at Components.Stats (line 100, column 5 - line 102, column 79): " + [result.constructor.name]);
           });
         });
       }
       ;
-      throw new Error("Failed pattern match at Components.Stats (line 94, column 16 - line 103, column 79): " + [v.constructor.name]);
+      throw new Error("Failed pattern match at Components.Stats (line 93, column 16 - line 102, column 79): " + [v.constructor.name]);
     };
   };
   var component4 = function(dictMonadAff) {

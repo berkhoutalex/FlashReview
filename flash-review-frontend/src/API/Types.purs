@@ -6,7 +6,7 @@ import API.DateTime (SerializableDateTime)
 import API.UUID (SerializableUUID)
 import Data.Argonaut.Decode (class DecodeJson)
 import Data.Argonaut.Decode.Generic (genericDecodeJson)
-import Data.Argonaut.Encode (class EncodeJson)
+import Data.Argonaut.Encode (class EncodeJson, encodeJson)
 import Data.Argonaut.Encode.Generic (genericEncodeJson)
 import Data.Generic.Rep (class Generic)
 
@@ -23,7 +23,7 @@ newtype Flashcard = Flashcard
 
 derive instance genericFlashcard :: Generic Flashcard _
 instance encodeJsonFlashcard :: EncodeJson Flashcard where
-  encodeJson = genericEncodeJson
+  encodeJson (Flashcard record) = encodeJson record
 instance decodeJsonFlashcard :: DecodeJson Flashcard where
   decodeJson = genericDecodeJson
 
@@ -34,7 +34,7 @@ newtype ReviewResult = ReviewResult
 
 derive instance genericReviewResult :: Generic ReviewResult _
 instance encodeJsonReviewResult :: EncodeJson ReviewResult where
-  encodeJson = genericEncodeJson
+  encodeJson (ReviewResult record) = encodeJson record
 instance decodeJsonReviewResult :: DecodeJson ReviewResult where
   decodeJson = genericDecodeJson
 
@@ -45,6 +45,6 @@ newtype Stats = Stats
 
 derive instance genericStats :: Generic Stats _
 instance encodeJsonStats :: EncodeJson Stats where
-  encodeJson = genericEncodeJson
+  encodeJson (Stats record) = encodeJson record
 instance decodeJsonStats :: DecodeJson Stats where
   decodeJson = genericDecodeJson

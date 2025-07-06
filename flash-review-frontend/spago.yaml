@@ -14,6 +14,7 @@ package:
     - effect
     - either
     - fetch
+    - fetch-argonaut
     - foldable-traversable
     - formatters
     - halogen
