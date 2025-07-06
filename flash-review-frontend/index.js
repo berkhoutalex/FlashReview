@@ -2442,6 +2442,21 @@
   var length2 = function(s) {
     return s.length;
   };
+  var _indexOf = function(just) {
+    return function(nothing) {
+      return function(x) {
+        return function(s) {
+          var i2 = s.indexOf(x);
+          return i2 === -1 ? nothing : just(i2);
+        };
+      };
+    };
+  };
+  var take2 = function(n) {
+    return function(s) {
+      return s.substr(0, n);
+    };
+  };
   var drop2 = function(n) {
     return function(s) {
       return s.substring(n);
@@ -2473,6 +2488,9 @@
       return Nothing.value;
     };
   };
+  var indexOf = /* @__PURE__ */ function() {
+    return _indexOf(Just.create)(Nothing.value);
+  }();
 
   // output/Data.String.Common/foreign.js
   var toLower = function(s) {
@@ -2574,6 +2592,13 @@
   var toCodePointArray = /* @__PURE__ */ _toCodePointArray(toCodePointArrayFallback)(unsafeCodePointAt0);
   var length3 = function($74) {
     return length(toCodePointArray($74));
+  };
+  var indexOf2 = function(p2) {
+    return function(s) {
+      return map5(function(i2) {
+        return length3(take2(i2)(s));
+      })(indexOf(p2)(s));
+    };
   };
   var fromCharCode2 = /* @__PURE__ */ function() {
     var $75 = toEnumWithDefaults(boundedEnumChar)(bottom(boundedChar))(top(boundedChar));
@@ -8066,13 +8091,53 @@
         }
         ;
         if (v1 instanceof Left) {
-          return new Left(new TypeMismatch("Invalid DateTime format: " + (v.value0 + (" - " + v1.value0))));
+          var v2 = unformatDateTime("YYYY-MM-DDTHH:mm:ssZ")(v.value0);
+          if (v2 instanceof Right) {
+            return new Right(v2.value0);
+          }
+          ;
+          if (v2 instanceof Left) {
+            var v3 = unformatDateTime("YYYY-MM-DD HH:mm:ss")(v.value0);
+            if (v3 instanceof Right) {
+              return new Right(v3.value0);
+            }
+            ;
+            if (v3 instanceof Left) {
+              var modifiedStr = function() {
+                var v43 = indexOf2(".")(v.value0);
+                if (v43 instanceof Just) {
+                  var basePart = take3(v43.value0)(v.value0);
+                  return basePart + "Z";
+                }
+                ;
+                if (v43 instanceof Nothing) {
+                  return v.value0;
+                }
+                ;
+                throw new Error("Failed pattern match at API.DateTime (line 46, column 25 - line 51, column 41): " + [v43.constructor.name]);
+              }();
+              var v42 = unformatDateTime("YYYY-MM-DDTHH:mm:ssZ")(modifiedStr);
+              if (v42 instanceof Right) {
+                return new Right(v42.value0);
+              }
+              ;
+              if (v42 instanceof Left) {
+                return new Left(new TypeMismatch("Invalid DateTime format: " + v.value0));
+              }
+              ;
+              throw new Error("Failed pattern match at API.DateTime (line 53, column 23 - line 55, column 91): " + [v42.constructor.name]);
+            }
+            ;
+            throw new Error("Failed pattern match at API.DateTime (line 38, column 17 - line 55, column 91): " + [v3.constructor.name]);
+          }
+          ;
+          throw new Error("Failed pattern match at API.DateTime (line 34, column 13 - line 55, column 91): " + [v2.constructor.name]);
         }
         ;
-        throw new Error("Failed pattern match at API.DateTime (line 30, column 9 - line 32, column 95): " + [v1.constructor.name]);
+        throw new Error("Failed pattern match at API.DateTime (line 30, column 9 - line 55, column 91): " + [v1.constructor.name]);
       }
       ;
-      throw new Error("Failed pattern match at API.DateTime (line 27, column 5 - line 32, column 95): " + [v.constructor.name]);
+      throw new Error("Failed pattern match at API.DateTime (line 26, column 5 - line 55, column 91): " + [v.constructor.name]);
     }
   };
 
@@ -8193,10 +8258,10 @@
           return new Left(new TypeMismatch("Invalid UUID format: " + v.value0));
         }
         ;
-        throw new Error("Failed pattern match at API.UUID (line 26, column 9 - line 28, column 74): " + [v1.constructor.name]);
+        throw new Error("Failed pattern match at API.UUID (line 23, column 9 - line 25, column 74): " + [v1.constructor.name]);
       }
       ;
-      throw new Error("Failed pattern match at API.UUID (line 23, column 5 - line 28, column 74): " + [v.constructor.name]);
+      throw new Error("Failed pattern match at API.UUID (line 20, column 5 - line 25, column 74): " + [v.constructor.name]);
     }
   };
 
@@ -10821,7 +10886,7 @@
             return pure7(handleDecodeResult(decoder(v.value0)));
           }
           ;
-          throw new Error("Failed pattern match at API.Client (line 31, column 7 - line 33, column 63): " + [v.constructor.name]);
+          throw new Error("Failed pattern match at API.Client (line 28, column 7 - line 30, column 63): " + [v.constructor.name]);
         });
       }
       ;
@@ -14483,7 +14548,7 @@
           return slot_3($$Proxy.value)(unit)(component32)(unit);
         }
         ;
-        throw new Error("Failed pattern match at Components.App (line 115, column 7 - line 118, column 77): " + [state3.currentView.constructor.name]);
+        throw new Error("Failed pattern match at Components.App (line 111, column 7 - line 114, column 77): " + [state3.currentView.constructor.name]);
       }()]);
     };
   };

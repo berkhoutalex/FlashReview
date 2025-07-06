@@ -17,7 +17,6 @@ license-file:   LICENSE
 build-type:     Simple
 extra-source-files:
     README.md
-    CHANGELOG.md
 
 source-repository head
   type: git
@@ -26,6 +25,7 @@ source-repository head
 library
   exposed-modules:
       API
+      Database
       Server
   other-modules:
       Paths_flash_review_backend
@@ -38,15 +38,23 @@ library
       aeson
     , base >=4.7 && <5
     , bytestring
+    , esqueleto
     , http-types
+    , monad-logger
+    , mtl
     , persistent
-    , persistent-sqlite
+    , persistent-postgresql
     , persistent-template
+    , postgresql-simple
+    , resource-pool
+    , resourcet
     , servant
     , servant-client
     , servant-server
     , text
     , time
+    , transformers
+    , unliftio
     , uuid
     , wai
     , wai-cors
@@ -66,16 +74,24 @@ executable flash-review-backend-exe
       aeson
     , base >=4.7 && <5
     , bytestring
+    , esqueleto
     , flash-review-backend
     , http-types
+    , monad-logger
+    , mtl
     , persistent
-    , persistent-sqlite
+    , persistent-postgresql
     , persistent-template
+    , postgresql-simple
+    , resource-pool
+    , resourcet
     , servant
     , servant-client
     , servant-server
     , text
     , time
+    , transformers
+    , unliftio
     , uuid
     , wai
     , wai-cors
@@ -96,16 +112,24 @@ test-suite flash-review-backend-test
       aeson
     , base >=4.7 && <5
     , bytestring
+    , esqueleto
     , flash-review-backend
     , http-types
+    , monad-logger
+    , mtl
     , persistent
-    , persistent-sqlite
+    , persistent-postgresql
     , persistent-template
+    , postgresql-simple
+    , resource-pool
+    , resourcet
     , servant
     , servant-client
     , servant-server
     , text
     , time
+    , transformers
+    , unliftio
     , uuid
     , wai
     , wai-cors

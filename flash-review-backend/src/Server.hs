@@ -1,38 +1,65 @@
+{-# LANGUAGE DataKinds         #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards   #-}
+{-# LANGUAGE TypeOperators     #-}
 
+module Server( server, initializeApp ) where
 
-module Server( server ) where
-
-import           API       (Flashcard, FlashcardAPI, ReviewResult, Stats (..))
-import           Data.UUID (UUID)
+import qualified API                        (Flashcard, FlashcardAPI,
+                                             ReviewResult, Stats (..))
+import           Control.Monad.IO.Class     (liftIO)
+import           Data.UUID                  (UUID)
+import qualified Database                   as DB
+import qualified Database.PostgreSQL.Simple as PG
 import           Servant
 
-server :: Server API.FlashcardAPI
-server =
-       getCards
-  :<|> createCard
-  :<|> updateCard
-  :<|> deleteCard
-  :<|> getReviewQueue
-  :<|> submitReview
-  :<|> getStats
+-- App environment containing our database connection
+data AppEnv = AppEnv
+  { appDbConn :: PG.Connection
+  }
 
-getCards :: Handler [Flashcard]
-getCards = pure []
+-- Initialize the app environment
+initializeApp :: IO AppEnv
+initializeApp = do
+  conn <- DB.connectDb
+  DB.setupSchema conn
+  pure $ AppEnv conn
 
-createCard :: Flashcard -> Handler Flashcard
-createCard = pure
+-- Main server function
+server :: AppEnv -> Server API.FlashcardAPI
+server env =
+       getCards env
+  :<|> createCard env
+  :<|> updateCard env
+  :<|> deleteCard env
+  :<|> getReviewQueue env
+  :<|> submitReview env
+  :<|> getStats env
 
-updateCard :: UUID -> Flashcard -> Handler Flashcard
-updateCard _ = pure
+-- Handler implementations
+getCards :: AppEnv -> Handler [API.Flashcard]
+getCards AppEnv{..} = liftIO $ DB.getAllCardsDb appDbConn
 
-deleteCard :: UUID -> Handler NoContent
-deleteCard _ = pure NoContent
+createCard :: AppEnv -> API.Flashcard -> Handler API.Flashcard
+createCard AppEnv{..} flashcard = liftIO $ DB.createCardDb appDbConn flashcard
 
-getReviewQueue :: Handler [Flashcard]
-getReviewQueue = pure []
+updateCard :: AppEnv -> UUID -> API.Flashcard -> Handler API.Flashcard
+updateCard AppEnv{..} uuid flashcard = liftIO $ DB.updateCardDb appDbConn uuid flashcard
 
-submitReview :: UUID -> ReviewResult -> Handler NoContent
-submitReview _ _ = pure NoContent
+deleteCard :: AppEnv -> UUID -> Handler NoContent
+deleteCard AppEnv{..} uuid = do
+  liftIO $ DB.deleteCardDb appDbConn uuid
+  pure NoContent
 
-getStats :: Handler Stats
-getStats = pure $ Stats 0
+getReviewQueue :: AppEnv -> Handler [API.Flashcard]
+getReviewQueue AppEnv{..} = liftIO $ DB.getReviewCardsDb appDbConn
+
+submitReview :: AppEnv -> UUID -> API.ReviewResult -> Handler NoContent
+submitReview AppEnv{..} uuid result = do
+  liftIO $ DB.processReviewDb appDbConn uuid result
+  pure NoContent
+
+getStats :: AppEnv -> Handler API.Stats
+getStats AppEnv{..} = do
+  dueCount <- liftIO $ DB.getDueCountDb appDbConn
+  pure $ API.Stats dueCount

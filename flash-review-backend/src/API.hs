@@ -1,9 +1,8 @@
 {-# LANGUAGE DataKinds     #-}
 {-# LANGUAGE DeriveGeneric #-}
-
 {-# LANGUAGE TypeOperators #-}
 
-module API(FlashcardAPI, Flashcard, ReviewResult, Stats(..)) where
+module API(FlashcardAPI, Flashcard(..), ReviewResult(..), Stats(..)) where
 
 import           Data.Aeson      (FromJSON, ToJSON)
 import           Data.Text       (Text)
