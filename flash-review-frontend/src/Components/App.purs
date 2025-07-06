@@ -15,29 +15,26 @@ import CSS.Cursor (pointer)
 import Effect.Aff (Aff)
 import Effect.Aff.Class (class MonadAff)
 
--- | The app's views
 data View = FlashcardsView | ReviewView | StatsView
 
 derive instance eqView :: Eq View
 
 
 
--- | The state of the component
 type State = 
   { currentView :: View
   }
 
--- | The query algebra for the component
 data Action = SwitchView View
 
--- | The slots for child components
+
 type Slots =
   ( flashcardList :: forall query. H.Slot query Unit Unit
   , review :: forall query. H.Slot query Unit Unit
   , stats :: forall query. H.Slot query Unit Unit
   )
 
--- | The component definition
+
 component :: forall query input output. H.Component query input output Aff
 component =
   H.mkComponent
@@ -46,7 +43,6 @@ component =
     , eval: H.mkEval $ H.defaultEval { handleAction = handleAction }
     }
 
--- | The rendering function for the component
 render :: forall m. MonadAff m => State -> H.ComponentHTML Action Slots m
 render state =
   HH.div

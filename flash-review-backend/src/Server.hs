@@ -16,7 +16,6 @@ server =
   :<|> submitReview
   :<|> getStats
 
--- Dummy implementations for now
 getCards :: Handler [Flashcard]
 getCards = pure []
 

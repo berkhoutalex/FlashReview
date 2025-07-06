@@ -35,7 +35,7 @@ type FlashcardAPI =
   :<|> "stats" :> Get '[JSON] Stats
 
 newtype ReviewResult = ReviewResult
-  { rating :: Int -- e.g., 0..5
+  { rating :: Int
   } deriving (Generic)
 
 instance ToJSON ReviewResult

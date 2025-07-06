@@ -4,13 +4,10 @@ import Prelude
 
 import API.DateTime (SerializableDateTime)
 import API.UUID (SerializableUUID)
-import Data.Argonaut.Decode (class DecodeJson)
-import Data.Argonaut.Decode.Generic (genericDecodeJson)
+import Data.Argonaut.Decode (class DecodeJson, (.:), decodeJson)
 import Data.Argonaut.Encode (class EncodeJson, encodeJson)
-import Data.Argonaut.Encode.Generic (genericEncodeJson)
 import Data.Generic.Rep (class Generic)
 
--- | Flashcard data type that mirrors the Haskell API
 newtype Flashcard = Flashcard
   { id :: SerializableUUID
   , front :: String
@@ -25,20 +22,38 @@ derive instance genericFlashcard :: Generic Flashcard _
 instance encodeJsonFlashcard :: EncodeJson Flashcard where
   encodeJson (Flashcard record) = encodeJson record
 instance decodeJsonFlashcard :: DecodeJson Flashcard where
-  decodeJson = genericDecodeJson
+  decodeJson json = do
+    obj <- decodeJson json
+    id <- obj .: "id"
+    front <- obj .: "front"
+    back <- obj .: "back"
+    nextReview <- obj .: "nextReview"
+    interval <- obj .: "interval"
+    easeFactor <- obj .: "easeFactor"
+    repetitions <- obj .: "repetitions"
+    pure $ Flashcard
+      { id
+      , front
+      , back
+      , nextReview
+      , interval
+      , easeFactor
+      , repetitions
+      }
 
--- | Review result data type
 newtype ReviewResult = ReviewResult
-  { rating :: Int -- e.g., 0..5
+  { rating :: Int
   }
 
 derive instance genericReviewResult :: Generic ReviewResult _
 instance encodeJsonReviewResult :: EncodeJson ReviewResult where
   encodeJson (ReviewResult record) = encodeJson record
 instance decodeJsonReviewResult :: DecodeJson ReviewResult where
-  decodeJson = genericDecodeJson
+  decodeJson json = do
+    obj <- decodeJson json
+    rating <- obj .: "rating"
+    pure $ ReviewResult { rating }
 
--- | Statistics data type
 newtype Stats = Stats
   { dueToday :: Int
   }
@@ -47,4 +62,7 @@ derive instance genericStats :: Generic Stats _
 instance encodeJsonStats :: EncodeJson Stats where
   encodeJson (Stats record) = encodeJson record
 instance decodeJsonStats :: DecodeJson Stats where
-  decodeJson = genericDecodeJson
+  decodeJson json = do
+    obj <- decodeJson json
+    dueToday <- obj .: "dueToday"
+    pure $ Stats { dueToday }

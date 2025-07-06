@@ -4,11 +4,10 @@
 module Main where
 
 import           API
-import           Data.ByteString.Char8       (pack)
 import           Network.HTTP.Types          (methodDelete, methodGet,
                                               methodOptions, methodPost,
                                               methodPut)
-import           Network.HTTP.Types.Header   (hAuthorization, hContentType)
+import           Network.HTTP.Types.Header   (hContentType)
 import           Network.Wai.Handler.Warp    (run)
 import           Network.Wai.Middleware.Cors
 import           Servant
@@ -17,7 +16,7 @@ import           Server                      (server)
 api :: Proxy API.FlashcardAPI
 api = Proxy
 
--- | Use the most permissive CORS settings for development
+
 
 app :: Application
 app = cors ( const $ Just (simpleCorsResourcePolicy  {
