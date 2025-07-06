@@ -1,0 +1,35 @@
+package:
+  name: flash-review-frontend
+  dependencies:
+    - aff
+    - affjax
+    - affjax-web
+    - argonaut-codecs
+    - argonaut-generic
+    - arrays
+    - console
+    - const
+    - css
+    - datetime
+    - effect
+    - either
+    - fetch
+    - fetch-argonaut
+    - foldable-traversable
+    - formatters
+    - halogen
+    - halogen-css
+    - halogen-subscriptions
+    - http-methods
+    - maybe
+    - media-types
+    - prelude
+    - spec
+    - uuid
+  test:
+    main: Test.Main
+    dependencies: []
+workspace:
+  packageSet:
+    registry: 65.1.0
+  extraPackages: {}

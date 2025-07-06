@@ -1,0 +1,27 @@
+{
+  "name": "flash-review-frontend",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "build": "spago build",
+    "bundle": "spago bundle",
+    "serve": "node server.js",
+    "start": "npm run build && npm run bundle && npm run serve"
+  },
+  "devDependencies": {
+    "express": "^4.21.2",
+    "purescript": "^0.15.15",
+    "spago": "^0.93.44"
+  },
+  "dependencies": {
+    "esbuild": "^0.25.5",
+    "uuid": "^11.1.0"
+  }
+}
