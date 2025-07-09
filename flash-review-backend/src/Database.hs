@@ -256,7 +256,6 @@ processReviewDb conn uuid result = do
                           (0.1 - (5 - fromIntegral (API.rating result)) *
                           (0.08 + (5 - fromIntegral (API.rating result)) * 0.02))
 
-
           newInterval =
             if API.rating result < 3
               then 1

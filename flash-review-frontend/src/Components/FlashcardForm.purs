@@ -170,7 +170,7 @@ handleAction = case _ of
           , front: state.front
           , back: state.back
           , nextReview: wrapDateTime now
-          , interval: 0
+          , interval: 1
           , easeFactor: 2.5
           , repetitions: 0
           }

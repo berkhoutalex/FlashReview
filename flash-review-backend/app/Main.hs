@@ -18,12 +18,9 @@ api = Proxy
 
 main :: IO ()
 main = do
-  putStrLn "Starting flashcards backend on port 8081"
 
-  -- Initialize app environment with database connection
   env <- initializeApp
 
-  -- Create the application with CORS middleware
   let app = cors ( const $ Just (simpleCorsResourcePolicy {
         corsRequestHeaders = [hContentType],
         corsMethods = [methodGet, methodPost, methodPut, methodDelete, methodOptions]

@@ -13633,7 +13633,7 @@
                   front: state3.front,
                   back: state3.back,
                   nextReview: wrapDateTime(now2),
-                  interval: 0,
+                  interval: 1,
                   easeFactor: 2.5,
                   repetitions: 0
                 };
