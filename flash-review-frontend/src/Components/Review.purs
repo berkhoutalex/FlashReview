@@ -173,5 +173,5 @@ handleAction = case _ of
     state <- H.get
     let nextIndex = state.currentIndex + 1
     if nextIndex >= length state.queue
-      then H.modify_ \s -> s { queue = [], currentIndex = 0, showAnswer = false }
-      else H.modify_ \s -> s { currentIndex = nextIndex, showAnswer = false }
+      then H.modify_ \s -> s { loading = false, queue = [], currentIndex = 0, showAnswer = false }
+      else H.modify_ \s -> s { loading = false, currentIndex = nextIndex, showAnswer = false }

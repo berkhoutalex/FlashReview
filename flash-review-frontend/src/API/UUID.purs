@@ -10,14 +10,11 @@ import Data.Maybe (Maybe(..))
 import Data.UUID (UUID)
 import Data.UUID as UUID
 
--- | Newtype wrapper for UUID to avoid orphan instances
 newtype SerializableUUID = SerializableUUID UUID
 
--- | Encode a SerializableUUID to JSON
 instance encodeJsonSerializableUUID :: EncodeJson SerializableUUID where
   encodeJson (SerializableUUID uuid) = fromString (UUID.toString uuid)
 
--- | Decode a SerializableUUID from JSON
 instance decodeJsonSerializableUUID :: DecodeJson SerializableUUID where
   decodeJson json = 
     case toString json of
@@ -27,10 +24,8 @@ instance decodeJsonSerializableUUID :: DecodeJson SerializableUUID where
           Just uuid -> Right (SerializableUUID uuid)
           Nothing -> Left $ TypeMismatch $ "Invalid UUID format: " <> str
 
--- | Unwrap the UUID from SerializableUUID
 unwrap :: SerializableUUID -> UUID
 unwrap (SerializableUUID uuid) = uuid
 
--- | Wrap a UUID in SerializableUUID
 wrap :: UUID -> SerializableUUID
 wrap = SerializableUUID
