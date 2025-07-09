@@ -14276,6 +14276,7 @@
                 ;
               }
               ;
+              $66.loading = false;
               $66.queue = [];
               $66.currentIndex = 0;
               $66.showAnswer = false;
@@ -14292,6 +14293,7 @@
               ;
             }
             ;
+            $69.loading = false;
             $69.currentIndex = nextIndex;
             $69.showAnswer = false;
             return $69;
@@ -14299,7 +14301,7 @@
         });
       }
       ;
-      throw new Error("Failed pattern match at Components.Review (line 147, column 16 - line 177, column 78): " + [v.constructor.name]);
+      throw new Error("Failed pattern match at Components.Review (line 147, column 16 - line 177, column 95): " + [v.constructor.name]);
     };
   };
   var component3 = function(dictMonadAff) {

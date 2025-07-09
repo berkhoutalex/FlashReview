@@ -1,7 +1,7 @@
-{-# LANGUAGE DataKinds         #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecordWildCards   #-}
-{-# LANGUAGE TypeOperators     #-}
+{-# LANGUAGE DataKinds       #-}
+
+{-# LANGUAGE RecordWildCards #-}
+
 
 module Server( server, initializeApp ) where
 
@@ -13,19 +13,17 @@ import qualified Database                   as DB
 import qualified Database.PostgreSQL.Simple as PG
 import           Servant
 
--- App environment containing our database connection
-data AppEnv = AppEnv
+newtype AppEnv = AppEnv
   { appDbConn :: PG.Connection
   }
 
--- Initialize the app environment
 initializeApp :: IO AppEnv
 initializeApp = do
   conn <- DB.connectDb
   DB.setupSchema conn
   pure $ AppEnv conn
 
--- Main server function
+
 server :: AppEnv -> Server API.FlashcardAPI
 server env =
        getCards env
@@ -36,7 +34,7 @@ server env =
   :<|> submitReview env
   :<|> getStats env
 
--- Handler implementations
+
 getCards :: AppEnv -> Handler [API.Flashcard]
 getCards AppEnv{..} = liftIO $ DB.getAllCardsDb appDbConn
 
