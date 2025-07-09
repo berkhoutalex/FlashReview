@@ -32,9 +32,8 @@ If you encounter issues with Docker, please refer to the [Docker Troubleshooting
 
 ### Option 2: Using the Setup Scripts
 
-You can use the included setup scripts (`setup-postgres.ps1` for Windows or `setup-postgres.sh` for Linux/macOS) as described in the Configuration section below.
 
-### Option 3: Manual Setup
+### Option 2: Manual Setup
 
 If you already have PostgreSQL installed, create the database manually:
 
