@@ -54,65 +54,6 @@ The database connection settings are in `Database.hs`. By default, it connects t
 
 You may need to modify these settings to match your PostgreSQL configuration.
 
-### Database Setup Scripts
-
-For convenience, the project includes scripts to help manage your PostgreSQL database:
-
-#### Windows (PowerShell)
-
-```powershell
-# Initial setup (create data directory, start server, create database)
-.\setup-postgres.ps1 -Action setup
-
-# Start the PostgreSQL server
-.\setup-postgres.ps1 -Action start
-
-# Stop the PostgreSQL server
-.\setup-postgres.ps1 -Action stop
-
-# Check status of the PostgreSQL server
-.\setup-postgres.ps1 -Action status
-
-# Create the database
-.\setup-postgres.ps1 -Action create-db
-
-# Drop the database
-.\setup-postgres.ps1 -Action drop-db
-
-# Run migrations
-.\setup-postgres.ps1 -Action migrate
-```
-
-#### Linux/macOS (Bash)
-
-```bash
-# Make the script executable
-chmod +x setup-postgres.sh
-
-# Initial setup (create data directory, start server, create database)
-./setup-postgres.sh setup
-
-# Start the PostgreSQL server
-./setup-postgres.sh start
-
-# Stop the PostgreSQL server
-./setup-postgres.sh stop
-
-# Check status of the PostgreSQL server
-./setup-postgres.sh status
-
-# Create the database
-./setup-postgres.sh create-db
-
-# Drop the database
-./setup-postgres.sh drop-db
-
-# Run migrations
-./setup-postgres.sh migrate
-```
-
-You may need to modify the configuration variables in the scripts to match your PostgreSQL installation path and preferences.
-
 ## Building and Running
 
 Build the project:
