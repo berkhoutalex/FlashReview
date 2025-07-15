@@ -19,6 +19,8 @@ module Database
   , processReviewDb
   , getDueCountDb
   , setupSchema
+  , authenticateUserDb
+  , signupUserDb
   ) where
 
 import qualified API
@@ -166,6 +168,45 @@ instance PG.ToRow FlashcardRow where
     , PG.toField rowRepetitions
     ]
 
+data UserRow = UserRow
+  { userId       :: UUID
+  , userName     :: Text
+  , userPassword :: Text
+  , userEmail    :: Text
+  } deriving (Show)
+
+fromUserRow :: UserRow -> API.User
+fromUserRow UserRow{..} = API.User
+  { API.userId = userId
+  , API.username = userName
+  , API.email = userEmail
+  , API.password = userPassword
+  }
+
+toUserRow :: API.User -> UserRow
+toUserRow API.User{..} = UserRow
+  { userId = userId
+  , userName = username
+  , userPassword = password
+  , userEmail = email
+  }
+
+instance PG.FromRow UserRow where
+  fromRow = do
+    userId <- PG.field
+    userName <- PG.field
+    userPassword <- PG.field
+    userEmail <- PG.field
+    return UserRow{..}
+
+instance PG.ToRow UserRow where
+  toRow UserRow{..} =
+    [ PG.toField userId
+    , PG.toField userName
+    , PG.toField userPassword
+    , PG.toField userEmail
+    ]
+
 setupSchema :: PG.Connection -> IO ()
 setupSchema conn = do
   putStrLn "Setting up database schema..."
@@ -179,6 +220,14 @@ setupSchema conn = do
     \  interval INTEGER NOT NULL, \
     \  ease_factor DOUBLE PRECISION NOT NULL, \
     \  repetitions INTEGER NOT NULL \
+    \)"
+
+  void $ PG.execute_ conn
+    "CREATE TABLE IF NOT EXISTS users (\
+    \  userid UUID PRIMARY KEY, \
+    \  username TEXT NOT NULL UNIQUE, \
+    \  password TEXT NOT NULL, \
+    \  email TEXT NOT NULL UNIQUE \
     \)"
 
   void $ PG.execute_ conn
@@ -278,3 +327,19 @@ getDueCountDb conn = do
   [PG.Only count] <- PG.query conn
     "SELECT COUNT(*) FROM flashcards WHERE next_review <= ?" [now]
   return count
+
+authenticateUserDb :: PG.Connection -> Text -> Text -> IO (Maybe API.User)
+authenticateUserDb conn username password = do
+  rows <- PG.query conn
+    "SELECT userid, username, password, email FROM users \
+    \WHERE username = ? AND password = ?" (username, password)
+  return $ case rows of
+    [row] -> Just (fromUserRow row)
+    _     -> Nothing
+
+signupUserDb :: PG.Connection -> API.User -> IO API.User
+signupUserDb conn user = do
+  let row = toUserRow user
+  void $ PG.execute conn
+    "INSERT INTO users (username, password, email) VALUES (?, ?, ?)" row
+  return user

@@ -25,7 +25,9 @@ source-repository head
 library
   exposed-modules:
       API
+      Auth
       Database
+      Database.User
       Server
   other-modules:
       Paths_flash_review_backend
@@ -49,6 +51,8 @@ library
     , resource-pool
     , resourcet
     , servant
+    , servant-auth
+    , servant-auth-server
     , servant-client
     , servant-server
     , text
@@ -86,6 +90,8 @@ executable flash-review-backend-exe
     , resource-pool
     , resourcet
     , servant
+    , servant-auth
+    , servant-auth-server
     , servant-client
     , servant-server
     , text
@@ -124,6 +130,8 @@ test-suite flash-review-backend-test
     , resource-pool
     , resourcet
     , servant
+    , servant-auth
+    , servant-auth-server
     , servant-client
     , servant-server
     , text
