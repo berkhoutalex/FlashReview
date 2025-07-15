@@ -30,9 +30,9 @@ type FlashcardAPI auths =
        Auth auths User :> "cards" :> Get '[JSON] [Flashcard]
   :<|> Auth auths User :> "cards" :> ReqBody '[JSON] Flashcard :> Post '[JSON] Flashcard
   :<|> Auth auths User :> "cards" :> Capture "id" UUID :> ReqBody '[JSON] Flashcard :> Put '[JSON] Flashcard
-  :<|> Auth auths User :> "cards" :> Capture "id" UUID :> DeleteNoContent
+  :<|> Auth auths User :> "cards" :> Capture "id" UUID :> Delete '[JSON] NoContent
   :<|> Auth auths User :> "review" :> "queue" :> Get '[JSON] [Flashcard]
-  :<|> Auth auths User :> "review" :> Capture "id" UUID :> ReqBody '[JSON] ReviewResult :> PostNoContent
+  :<|> Auth auths User :> "review" :> Capture "id" UUID :> ReqBody '[JSON] ReviewResult :> Post '[JSON] NoContent
   :<|> Auth auths User :> "stats" :> Get '[JSON] Stats
   :<|> "login" :> ReqBody '[JSON] User :> Post '[JSON] (Headers '[Header "Set-Cookie" SetCookie, Header "Set-Cookie" SetCookie] String)
   :<|> "signup" :> ReqBody '[JSON] User :> Post '[JSON] API.User

@@ -3,7 +3,7 @@
 {-# OPTIONS_GHC -Wno-name-shadowing #-}
 
 
-module Server( server, initializeApp ) where
+module Server( server, initializeApp, AppEnv(..) ) where
 
 import qualified API                        (Flashcard, FlashcardAPI,
                                              ReviewResult, Stats (..),
@@ -26,7 +26,6 @@ initializeApp :: IO AppEnv
 initializeApp = do
   conn <- DB.connectDb
   DB.setupSchema conn
-  -- Generate JWT key
   myKey <- generateKey
   let jwtSettings = defaultJWTSettings myKey
       cookieSettings = defaultCookieSettings

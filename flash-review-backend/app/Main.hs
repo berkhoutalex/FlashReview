@@ -4,6 +4,10 @@
 module Main where
 
 import           API
+import           Control.Monad.IO.Class
+import           Data.Aeson
+import qualified Data.ByteString.Lazy.Char8  as BSC
+import           GHC.Generics
 import           Network.HTTP.Types          (methodDelete, methodGet,
                                               methodOptions, methodPost,
                                               methodPut)
@@ -11,10 +15,10 @@ import           Network.HTTP.Types.Header   (hAuthorization, hContentType)
 import           Network.Wai.Handler.Warp    (run)
 import           Network.Wai.Middleware.Cors
 import           Servant
+import           Servant.Auth.Server
 import           Server                      (initializeApp, server)
 
--- API with JWT authentication
-api :: Proxy FlashcardAPI
+api :: Proxy (FlashcardAPI '[JWT])
 api = Proxy
 
 main :: IO ()
@@ -28,7 +32,11 @@ main = do
         corsOrigins = Nothing  -- Allow any origin
       }
 
-  let app = cors (const $ Just corsPolicy) $ serve api (server env)
+  let port = 8080
+  jwtSecretKey <- generateKey
+  let jwtSett = defaultJWTSettings jwtSecretKey
+  let cookieSett = defaultCookieSettings
+  let cfg = cookieSett :. jwtSett :. EmptyContext
+  run port $ serveWithContext
+      (Proxy :: Proxy (FlashcardAPI '[JWT])) cfg $ server env
 
-  putStrLn "Starting server on http://localhost:8081"
-  run 8081 app

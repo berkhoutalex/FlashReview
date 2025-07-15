@@ -25,9 +25,7 @@ source-repository head
 library
   exposed-modules:
       API
-      Auth
       Database
-      Database.User
       Server
   other-modules:
       Paths_flash_review_backend
