@@ -1,4 +1,4 @@
-{-# LANGUAGE LambdaCase          #-}
+
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE RecordWildCards     #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -27,10 +27,14 @@ import qualified API
 import           Control.Exception                  (SomeException, bracket,
                                                      throwIO, try)
 import           Control.Monad                      (void, when)
+import           Crypto.BCrypt                      (hashPasswordUsingPolicy,
+                                                     slowerBcryptHashingPolicy,
+                                                     validatePassword)
 import           Data.ByteString                    (ByteString)
 import qualified Data.ByteString.Char8              as BS
 import           Data.Maybe                         (fromMaybe)
 import           Data.Text                          (Text)
+import qualified Data.Text.Encoding                 as TE
 import           Data.Time                          (UTCTime, addUTCTime,
                                                      getCurrentTime)
 import           Data.UUID                          (UUID)
@@ -332,14 +336,29 @@ authenticateUserDb :: PG.Connection -> Text -> Text -> IO (Maybe API.User)
 authenticateUserDb conn username password = do
   rows <- PG.query conn
     "SELECT userid, username, password, email FROM users \
-    \WHERE username = ? AND password = ?" (username, password)
-  return $ case rows of
-    [row] -> Just (fromUserRow row)
-    _     -> Nothing
+    \WHERE username = ?" [username]
+  case rows of
+    [userRow@UserRow{..}] -> do
+      -- Convert Text to ByteString for bcrypt validation
+      let storedHash = TE.encodeUtf8 userPassword
+          providedPass = TE.encodeUtf8 password
+      if validatePassword storedHash providedPass
+        then return $ Just (fromUserRow userRow)
+        else return Nothing
+    _ -> return Nothing
 
 signupUserDb :: PG.Connection -> API.User -> IO API.User
 signupUserDb conn user = do
-  let row = toUserRow user
-  void $ PG.execute conn
-    "INSERT INTO users (username, password, email) VALUES (?, ?, ?)" row
-  return user
+  -- Hash the password using bcrypt
+  let rawPassword = TE.encodeUtf8 $ API.password user
+  mHashedPass <- hashPasswordUsingPolicy slowerBcryptHashingPolicy rawPassword
+  case mHashedPass of
+    Nothing -> error "Failed to hash password"
+    Just hashedPass -> do
+      -- Create a new user with the hashed password
+      let hashedUser = user { API.password = TE.decodeUtf8 hashedPass }
+          UserRow{..} = toUserRow hashedUser
+      void $ PG.execute conn
+        "INSERT INTO users (userid, username, password, email) VALUES (?, ?, ?, ?)"
+        (userId, userName, userPassword, userEmail)
+      return hashedUser

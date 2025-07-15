@@ -45,6 +45,7 @@ dependencies:
 - resourcet
 - postgresql-simple
 - unliftio
+- bcrypt
 
 ghc-options:
 - -Wall

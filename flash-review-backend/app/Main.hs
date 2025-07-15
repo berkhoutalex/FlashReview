@@ -4,10 +4,6 @@
 module Main where
 
 import           API
-import           Control.Monad.IO.Class
-import           Data.Aeson
-import qualified Data.ByteString.Lazy.Char8  as BSC
-import           GHC.Generics
 import           Network.HTTP.Types          (methodDelete, methodGet,
                                               methodOptions, methodPost,
                                               methodPut)
@@ -16,7 +12,8 @@ import           Network.Wai.Handler.Warp    (run)
 import           Network.Wai.Middleware.Cors
 import           Servant
 import           Servant.Auth.Server
-import           Server                      (initializeApp, server)
+import           Server                      (AppEnv (..), initializeApp,
+                                              server)
 
 api :: Proxy (FlashcardAPI '[JWT])
 api = Proxy
@@ -33,10 +30,10 @@ main = do
       }
 
   let port = 8080
-  jwtSecretKey <- generateKey
-  let jwtSett = defaultJWTSettings jwtSecretKey
-  let cookieSett = defaultCookieSettings
+  let cookieSett = appCookieSettings env
+  let jwtSett = appJWTSettings env
   let cfg = cookieSett :. jwtSett :. EmptyContext
-  run port $ serveWithContext
+  run port $ cors (const $ Just corsPolicy) $
+    serveWithContext
       (Proxy :: Proxy (FlashcardAPI '[JWT])) cfg $ server env
 

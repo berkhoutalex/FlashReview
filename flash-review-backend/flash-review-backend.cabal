@@ -37,6 +37,7 @@ library
   build-depends:
       aeson
     , base >=4.7 && <5
+    , bcrypt
     , bytestring
     , esqueleto
     , http-types
@@ -75,6 +76,7 @@ executable flash-review-backend-exe
   build-depends:
       aeson
     , base >=4.7 && <5
+    , bcrypt
     , bytestring
     , esqueleto
     , flash-review-backend
@@ -115,6 +117,7 @@ test-suite flash-review-backend-test
   build-depends:
       aeson
     , base >=4.7 && <5
+    , bcrypt
     , bytestring
     , esqueleto
     , flash-review-backend
