@@ -5,7 +5,7 @@
 
 module Server( server, initializeApp, AppEnv(..) ) where
 
-import qualified API                        (Flashcard, FlashcardAPI,
+import qualified API                        (Flashcard (..), FlashcardAPI,
                                              ReviewResult, Stats (..),
                                              User (..))
 import           Control.Monad.IO.Class     (liftIO)
@@ -49,48 +49,54 @@ server env =
 getCards :: AuthResult API.User -> AppEnv -> Handler [API.Flashcard]
 getCards authResult AppEnv{..} =
   case authResult of
-    Authenticated _ -> liftIO $ DB.getAllCardsDb appDbConn
-    _               -> throwError err401
+    Authenticated user -> liftIO $ DB.getAllCardsDb appDbConn (API.userId user)
+    _                  -> throwError err401
 
 createCard :: AuthResult API.User -> AppEnv -> API.Flashcard -> Handler API.Flashcard
 createCard authResult AppEnv{..} flashcard =
   case authResult of
-    Authenticated _ -> liftIO $ DB.createCardDb appDbConn flashcard
+    Authenticated user ->
+      -- Set the ownerId field to the authenticated user's ID
+      let cardWithOwner = flashcard { API.ownerId = API.userId user }
+      in liftIO $ DB.createCardDb appDbConn cardWithOwner
     _               -> throwError err401
 
 updateCard :: AuthResult API.User -> AppEnv -> UUID -> API.Flashcard -> Handler API.Flashcard
 updateCard authResult AppEnv{..} uuid flashcard =
   case authResult of
-    Authenticated _ -> liftIO $ DB.updateCardDb appDbConn uuid flashcard
+    Authenticated user ->
+      -- Ensure the card belongs to the authenticated user
+      let cardWithOwner = flashcard { API.ownerId = API.userId user }
+      in liftIO $ DB.updateCardDb appDbConn uuid cardWithOwner
     _               -> throwError err401
 
 deleteCard :: AuthResult API.User -> AppEnv -> UUID -> Handler NoContent
 deleteCard authResult AppEnv{..} uuid =
   case authResult of
-    Authenticated _ -> do
-      liftIO $ DB.deleteCardDb appDbConn uuid
+    Authenticated user -> do
+      liftIO $ DB.deleteCardDb appDbConn uuid (API.userId user)
       pure NoContent
     _ -> throwError err401
 
 getReviewQueue :: AuthResult API.User -> AppEnv -> Handler [API.Flashcard]
 getReviewQueue authResult AppEnv{..} =
   case authResult of
-    Authenticated _ -> liftIO $ DB.getReviewCardsDb appDbConn
-    _               -> throwError err401
+    Authenticated user -> liftIO $ DB.getReviewCardsDb appDbConn (API.userId user)
+    _                  -> throwError err401
 
 submitReview :: AuthResult API.User -> AppEnv -> UUID -> API.ReviewResult -> Handler NoContent
 submitReview authResult AppEnv{..} uuid result =
   case authResult of
-    Authenticated _ -> do
-      liftIO $ DB.processReviewDb appDbConn uuid result
+    Authenticated user -> do
+      liftIO $ DB.processReviewDb appDbConn uuid (API.userId user) result
       pure NoContent
     _ -> throwError err401
 
 getStats :: AuthResult API.User -> AppEnv -> Handler API.Stats
 getStats authResult AppEnv{..} =
   case authResult of
-    Authenticated _ -> do
-      dueCount <- liftIO $ DB.getDueCountDb appDbConn
+    Authenticated user -> do
+      dueCount <- liftIO $ DB.getDueCountDb appDbConn (API.userId user)
       pure $ API.Stats dueCount
     _ -> throwError err401
 

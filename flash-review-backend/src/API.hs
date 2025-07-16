@@ -21,6 +21,7 @@ data Flashcard = Flashcard
   , interval    :: Int
   , easeFactor  :: Double
   , repetitions :: Int
+  , ownerId     :: UUID
   } deriving (Generic, Show)
 
 instance ToJSON Flashcard

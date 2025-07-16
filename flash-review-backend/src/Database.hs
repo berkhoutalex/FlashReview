@@ -127,6 +127,7 @@ data FlashcardRow = FlashcardRow
   , rowInterval    :: Int
   , rowEaseFactor  :: Double
   , rowRepetitions :: Int
+  , rowUserId      :: UUID
   } deriving (Show)
 
 fromRow :: FlashcardRow -> API.Flashcard
@@ -138,6 +139,7 @@ fromRow FlashcardRow{..} = API.Flashcard
   , API.interval    = rowInterval
   , API.easeFactor  = rowEaseFactor
   , API.repetitions = rowRepetitions
+  , API.ownerId     = rowUserId
   }
 
 toRow :: API.Flashcard -> FlashcardRow
@@ -149,6 +151,7 @@ toRow card = FlashcardRow
   , rowInterval    = API.interval card
   , rowEaseFactor  = API.easeFactor card
   , rowRepetitions = API.repetitions card
+  , rowUserId      = API.ownerId card
   }
 
 instance PG.FromRow FlashcardRow where
@@ -159,7 +162,8 @@ instance PG.FromRow FlashcardRow where
     nextReview <- PG.field
     interval <- PG.field
     easeFactor <- PG.field
-    FlashcardRow uuid front back nextReview interval easeFactor <$> PG.field
+    repetitions <- PG.field
+    FlashcardRow uuid front back nextReview interval easeFactor repetitions <$> PG.field
 
 instance PG.ToRow FlashcardRow where
   toRow FlashcardRow{..} =
@@ -170,6 +174,7 @@ instance PG.ToRow FlashcardRow where
     , PG.toField rowInterval
     , PG.toField rowEaseFactor
     , PG.toField rowRepetitions
+    , PG.toField rowUserId
     ]
 
 data UserRow = UserRow
@@ -223,7 +228,8 @@ setupSchema conn = do
     \  next_review TIMESTAMP WITH TIME ZONE NOT NULL, \
     \  interval INTEGER NOT NULL, \
     \  ease_factor DOUBLE PRECISION NOT NULL, \
-    \  repetitions INTEGER NOT NULL \
+    \  repetitions INTEGER NOT NULL, \
+    \  user_id UUID NOT NULL \
     \)"
 
   void $ PG.execute_ conn
@@ -237,22 +243,55 @@ setupSchema conn = do
   void $ PG.execute_ conn
     "CREATE INDEX IF NOT EXISTS idx_flashcards_next_review ON flashcards (next_review)"
 
+  void $ PG.execute_ conn
+    "CREATE INDEX IF NOT EXISTS idx_flashcards_user_id ON flashcards (user_id)"
+
+  -- Add foreign key if it doesn't exist (this requires a more complex check)
+  void $ PG.execute_ conn
+    "DO $$ \
+    \BEGIN \
+    \  IF NOT EXISTS ( \
+    \    SELECT 1 FROM information_schema.table_constraints \
+    \    WHERE constraint_name = 'fk_flashcards_user_id' \
+    \  ) THEN \
+    \    ALTER TABLE flashcards \
+    \    ADD CONSTRAINT fk_flashcards_user_id \
+    \    FOREIGN KEY (user_id) \
+    \    REFERENCES users(userid); \
+    \  END IF; \
+    \END; \
+    \$$"
+
+  -- Add check for existing columns and add if missing
+  void $ PG.execute_ conn
+    "DO $$ \
+    \BEGIN \
+    \  IF NOT EXISTS ( \
+    \    SELECT 1 FROM information_schema.columns \
+    \    WHERE table_name = 'flashcards' AND column_name = 'user_id' \
+    \  ) THEN \
+    \    ALTER TABLE flashcards ADD COLUMN user_id UUID; \
+    \  END IF; \
+    \END; \
+    \$$"
+
   putStrLn "Schema setup complete."
 
-getAllCardsDb :: PG.Connection -> IO [API.Flashcard]
-getAllCardsDb conn = do
-  rows <- PG.query_ conn
-    "SELECT id, front, back, next_review, interval, ease_factor, repetitions \
+getAllCardsDb :: PG.Connection -> UUID -> IO [API.Flashcard]
+getAllCardsDb conn userId = do
+  rows <- PG.query conn
+    "SELECT id, front, back, next_review, interval, ease_factor, repetitions, user_id \
     \FROM flashcards \
-    \ORDER BY next_review ASC"
+    \WHERE user_id = ? \
+    \ORDER BY next_review ASC" [userId]
   return $ map fromRow rows
 
-getCardByIdDb :: PG.Connection -> UUID -> IO (Maybe API.Flashcard)
-getCardByIdDb conn uuid = do
+getCardByIdDb :: PG.Connection -> UUID -> UUID -> IO (Maybe API.Flashcard)
+getCardByIdDb conn uuid userId = do
   rows <- PG.query conn
-    "SELECT id, front, back, next_review, interval, ease_factor, repetitions \
+    "SELECT id, front, back, next_review, interval, ease_factor, repetitions, user_id \
     \FROM flashcards \
-    \WHERE id = ?" [uuid]
+    \WHERE id = ? AND user_id = ?" [uuid, userId]
   return $ case rows of
     [row] -> Just (fromRow row)
     _     -> Nothing
@@ -261,8 +300,8 @@ createCardDb :: PG.Connection -> API.Flashcard -> IO API.Flashcard
 createCardDb conn card = do
   let row = toRow card
   void $ PG.execute conn
-    "INSERT INTO flashcards (id, front, back, next_review, interval, ease_factor, repetitions) \
-    \VALUES (?, ?, ?, ?, ?, ?, ?)" row
+    "INSERT INTO flashcards (id, front, back, next_review, interval, ease_factor, repetitions, user_id) \
+    \VALUES (?, ?, ?, ?, ?, ?, ?, ?)" row
   return card
 
 updateCardDb :: PG.Connection -> UUID -> API.Flashcard -> IO API.Flashcard
@@ -271,33 +310,33 @@ updateCardDb conn uuid card = do
   rowsAffected <- PG.execute conn
     "UPDATE flashcards \
     \SET front = ?, back = ?, next_review = ?, interval = ?, ease_factor = ?, repetitions = ? \
-    \WHERE id = ?"
+    \WHERE id = ? AND user_id = ?"
     (rowFront row, rowBack row, rowNextReview row, rowInterval row,
-     rowEaseFactor row, rowRepetitions row, uuid)
+     rowEaseFactor row, rowRepetitions row, uuid, rowUserId row)
 
   when (rowsAffected == 0) $ do
     void $ createCardDb conn card
 
   return card
 
-deleteCardDb :: PG.Connection -> UUID -> IO ()
-deleteCardDb conn uuid = do
+deleteCardDb :: PG.Connection -> UUID -> UUID -> IO ()
+deleteCardDb conn uuid userId = do
   void $ PG.execute conn
-    "DELETE FROM flashcards WHERE id = ?" [uuid]
+    "DELETE FROM flashcards WHERE id = ? AND user_id = ?" [uuid, userId]
 
-getReviewCardsDb :: PG.Connection -> IO [API.Flashcard]
-getReviewCardsDb conn = do
+getReviewCardsDb :: PG.Connection -> UUID -> IO [API.Flashcard]
+getReviewCardsDb conn userId = do
   now <- getCurrentTime
   rows <- PG.query conn
-    "SELECT id, front, back, next_review, interval, ease_factor, repetitions \
+    "SELECT id, front, back, next_review, interval, ease_factor, repetitions, user_id \
     \FROM flashcards \
-    \WHERE next_review <= ? \
-    \ORDER BY next_review ASC" [now]
+    \WHERE next_review <= ? AND user_id = ? \
+    \ORDER BY next_review ASC" (now, userId)
   return $ map fromRow rows
 
-processReviewDb :: PG.Connection -> UUID -> API.ReviewResult -> IO ()
-processReviewDb conn uuid result = do
-  maybeCard <- getCardByIdDb conn uuid
+processReviewDb :: PG.Connection -> UUID -> UUID -> API.ReviewResult -> IO ()
+processReviewDb conn uuid userId result = do
+  maybeCard <- getCardByIdDb conn uuid userId
   case maybeCard of
     Nothing -> pure ()
     Just card -> do
@@ -325,11 +364,11 @@ processReviewDb conn uuid result = do
         , API.nextReview = newNextReview
         }
 
-getDueCountDb :: PG.Connection -> IO Int
-getDueCountDb conn = do
+getDueCountDb :: PG.Connection -> UUID -> IO Int
+getDueCountDb conn userId = do
   now <- getCurrentTime
   [PG.Only count] <- PG.query conn
-    "SELECT COUNT(*) FROM flashcards WHERE next_review <= ?" [now]
+    "SELECT COUNT(*) FROM flashcards WHERE next_review <= ? AND user_id = ?" (now, userId)
   return count
 
 authenticateUserDb :: PG.Connection -> Text -> Text -> IO (Maybe API.User)
