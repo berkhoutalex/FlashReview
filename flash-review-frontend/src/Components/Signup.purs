@@ -207,7 +207,7 @@ handleAction = case _ of
           , password: state.password 
           }
         case result of
-          Right _ -> don
+          Right _ -> do
             H.raise SignupSuccessful
           Left err -> do
             H.modify_ \st -> st { error = Just $ "Signup failed: " <> err, isSubmitting = false }
