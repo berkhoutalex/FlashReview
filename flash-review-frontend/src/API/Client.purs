@@ -2,7 +2,7 @@ module API.Client where
 
 import Prelude
 
-import API.Types (Flashcard(..), ReviewResult, Stats)
+import API.Types (Flashcard(..), ReviewResult, Stats, User, UserCredentials)
 import API.UUID (SerializableUUID)
 import API.UUID (unwrap) as UUID
 import Data.Argonaut.Core (Json)
@@ -12,7 +12,7 @@ import Data.Argonaut.Parser (jsonParser)
 import Data.Either (Either(..), either)
 import Data.UUID (toString) as UUID
 import Effect.Aff (Aff)
-import Fetch (fetch, Method(..), Response)
+import Fetch (fetch, Method(..), Response, RequestCredentials(..))
 
 baseUrl :: String
 baseUrl = "http://localhost:8081"
@@ -88,4 +88,30 @@ submitReview id result = do
 getStats :: Aff (Either String Stats)
 getStats = do
   response <- fetch (baseUrl <> "/stats") {}
+  handleJsonResponse decodeJson response
+
+login :: UserCredentials -> Aff (Either String String)
+login credentials = do
+  let opts = 
+        { method: POST
+        , headers: { "Content-Type": "application/json" }
+        , body: toJsonString credentials
+        , credentials: Include -- Include cookies in the request
+        }
+  response <- fetch (baseUrl <> "/login") opts
+  if response.ok
+    then do
+      text <- response.text
+      pure $ Right text
+    else
+      pure $ Left $ "Login failed with status: " <> show response.status
+
+signup :: UserCredentials -> Aff (Either String User)
+signup credentials = do
+  let opts = 
+        { method: POST
+        , headers: { "Content-Type": "application/json" }
+        , body: toJsonString credentials
+        }
+  response <- fetch (baseUrl <> "/signup") opts
   handleJsonResponse decodeJson response

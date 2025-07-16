@@ -7,6 +7,7 @@ import API.UUID (SerializableUUID)
 import Data.Argonaut.Decode (class DecodeJson, (.:), decodeJson)
 import Data.Argonaut.Encode (class EncodeJson, encodeJson)
 import Data.Generic.Rep (class Generic)
+import Data.Maybe (Maybe)
 
 newtype Flashcard = Flashcard
   { id :: SerializableUUID
@@ -66,3 +67,33 @@ instance decodeJsonStats :: DecodeJson Stats where
     obj <- decodeJson json
     dueToday <- obj .: "dueToday"
     pure $ Stats { dueToday }
+
+newtype User = User
+  { userId :: SerializableUUID
+  , username :: String
+  , email :: String
+  , password :: String
+  }
+
+derive instance genericUser :: Generic User _
+instance encodeJsonUser :: EncodeJson User where
+  encodeJson (User record) = encodeJson record
+instance decodeJsonUser :: DecodeJson User where
+  decodeJson json = do
+    obj <- decodeJson json
+    userId <- obj .: "userId"
+    username <- obj .: "username"
+    email <- obj .: "email"
+    password <- obj .: "password"
+    pure $ User { userId, username, email, password }
+
+-- For creating new users or login
+newtype UserCredentials = UserCredentials
+  { username :: String
+  , email :: Maybe String
+  , password :: String
+  }
+
+derive instance genericUserCredentials :: Generic UserCredentials _
+instance encodeJsonUserCredentials :: EncodeJson UserCredentials where
+  encodeJson (UserCredentials record) = encodeJson record

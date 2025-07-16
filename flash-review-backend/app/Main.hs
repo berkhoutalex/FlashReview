@@ -4,6 +4,7 @@
 module Main where
 
 import           API
+import qualified Data.ByteString.Char8       as BS
 import           Network.HTTP.Types          (methodDelete, methodGet,
                                               methodOptions, methodPost,
                                               methodPut)
@@ -14,9 +15,8 @@ import           Servant
 import           Servant.Auth.Server
 import           Server                      (AppEnv (..), initializeApp,
                                               server)
-
-api :: Proxy (FlashcardAPI '[JWT])
-api = Proxy
+apiProxy :: Proxy (FlashcardAPI '[JWT])
+apiProxy = Proxy
 
 main :: IO ()
 main = do
@@ -26,14 +26,14 @@ main = do
   let corsPolicy = simpleCorsResourcePolicy {
         corsRequestHeaders = [hContentType, hAuthorization],
         corsMethods = [methodGet, methodPost, methodPut, methodDelete, methodOptions],
-        corsOrigins = Nothing  -- Allow any origin
+        corsOrigins = Just ([ BS.pack "http://localhost:3000" ], True)
       }
 
-  let port = 8080
+  let port = 8081
   let cookieSett = appCookieSettings env
   let jwtSett = appJWTSettings env
   let cfg = cookieSett :. jwtSett :. EmptyContext
   run port $ cors (const $ Just corsPolicy) $
     serveWithContext
-      (Proxy :: Proxy (FlashcardAPI '[JWT])) cfg $ server env
+      apiProxy cfg $ server env
 

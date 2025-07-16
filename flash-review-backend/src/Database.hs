@@ -139,7 +139,7 @@ fromRow FlashcardRow{..} = API.Flashcard
   , API.interval    = rowInterval
   , API.easeFactor  = rowEaseFactor
   , API.repetitions = rowRepetitions
-  , API.ownerId     = rowUserId
+  , API.ownerId     = Just rowUserId
   }
 
 toRow :: API.Flashcard -> FlashcardRow
@@ -151,7 +151,7 @@ toRow card = FlashcardRow
   , rowInterval    = API.interval card
   , rowEaseFactor  = API.easeFactor card
   , rowRepetitions = API.repetitions card
-  , rowUserId      = API.ownerId card
+  , rowUserId      = maybe (error "ownerId is required") id (API.ownerId card)
   }
 
 instance PG.FromRow FlashcardRow where

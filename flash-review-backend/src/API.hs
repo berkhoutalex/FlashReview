@@ -1,11 +1,17 @@
-{-# LANGUAGE DataKinds      #-}
-{-# LANGUAGE DeriveAnyClass #-}
-{-# LANGUAGE DeriveGeneric  #-}
-{-# LANGUAGE TypeOperators  #-}
+{-# LANGUAGE DataKinds       #-}
+{-# LANGUAGE DeriveAnyClass  #-}
+{-# LANGUAGE DeriveGeneric   #-}
+{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE TypeOperators   #-}
+{-# OPTIONS_GHC -Wno-name-shadowing #-}
 
-module API(FlashcardAPI, Flashcard(..), ReviewResult(..), Stats(..), User(..)) where
+module API(FlashcardAPI, Flashcard(..), FlashcardRequest(..), flashcardToRequest, ReviewResult(..), Stats(..), User(..), SignupRequest(..), LoginRequest(..)) where
 
-import           Data.Aeson          (FromJSON, ToJSON)
+import           Data.Aeson          (FromJSON, ToJSON (toJSON), defaultOptions,
+                                      fieldLabelModifier, genericParseJSON,
+                                      genericToJSON)
+import           Data.Aeson.Types    (FromJSON (parseJSON))
+import           Data.Char           (toLower)
 import           Data.Text           (Text)
 import           Data.Time.Clock     (UTCTime)
 import           Data.UUID           (UUID)
@@ -21,22 +27,56 @@ data Flashcard = Flashcard
   , interval    :: Int
   , easeFactor  :: Double
   , repetitions :: Int
-  , ownerId     :: UUID
+  , ownerId     :: Maybe UUID
   } deriving (Generic, Show)
 
 instance ToJSON Flashcard
 instance FromJSON Flashcard
 
+-- FlashcardRequest is used for creating or updating flashcards
+-- ownerId is omitted as it's determined from the authenticated user
+data FlashcardRequest = FlashcardRequest
+  { reqId          :: UUID
+  , reqFront       :: Text
+  , reqBack        :: Text
+  , reqNextReview  :: UTCTime
+  , reqInterval    :: Int
+  , reqEaseFactor  :: Double
+  , reqRepetitions :: Int
+  } deriving (Generic, Show)
+
+instance ToJSON FlashcardRequest where
+  toJSON = genericToJSON defaultOptions { fieldLabelModifier = \s -> case drop (length "req") s of
+    (x:xs) -> toLower x : xs
+    []     -> []
+  }
+instance FromJSON FlashcardRequest where
+  parseJSON = genericParseJSON defaultOptions { fieldLabelModifier = \s -> case drop (length "req") s of
+    (x:xs) -> toLower x : xs
+    []     -> []
+  }
+
+flashcardToRequest :: Flashcard -> FlashcardRequest
+flashcardToRequest Flashcard{..} = FlashcardRequest
+  { reqId          = id
+  , reqFront       = front
+  , reqBack        = back
+  , reqNextReview  = nextReview
+  , reqInterval    = interval
+  , reqEaseFactor  = easeFactor
+  , reqRepetitions = repetitions
+  }
+
 type FlashcardAPI auths =
        Auth auths User :> "cards" :> Get '[JSON] [Flashcard]
-  :<|> Auth auths User :> "cards" :> ReqBody '[JSON] Flashcard :> Post '[JSON] Flashcard
-  :<|> Auth auths User :> "cards" :> Capture "id" UUID :> ReqBody '[JSON] Flashcard :> Put '[JSON] Flashcard
+  :<|> Auth auths User :> "cards" :> ReqBody '[JSON] FlashcardRequest :> Post '[JSON] Flashcard
+  :<|> Auth auths User :> "cards" :> Capture "id" UUID :> ReqBody '[JSON] FlashcardRequest :> Put '[JSON] Flashcard
   :<|> Auth auths User :> "cards" :> Capture "id" UUID :> Delete '[JSON] NoContent
   :<|> Auth auths User :> "review" :> "queue" :> Get '[JSON] [Flashcard]
   :<|> Auth auths User :> "review" :> Capture "id" UUID :> ReqBody '[JSON] ReviewResult :> Post '[JSON] NoContent
   :<|> Auth auths User :> "stats" :> Get '[JSON] Stats
-  :<|> "login" :> ReqBody '[JSON] User :> Post '[JSON] (Headers '[Header "Set-Cookie" SetCookie, Header "Set-Cookie" SetCookie] String)
-  :<|> "signup" :> ReqBody '[JSON] User :> Post '[JSON] API.User
+  :<|> "login" :> ReqBody '[JSON] LoginRequest :> Post '[JSON] (Headers '[Header "Set-Cookie" SetCookie, Header "Set-Cookie" SetCookie] String)
+  :<|> "signup" :> ReqBody '[JSON] SignupRequest :> Post '[JSON] User
 
 newtype ReviewResult = ReviewResult
   { rating :: Int
@@ -61,3 +101,27 @@ data User = User
 
 instance ToJSON User
 instance FromJSON User
+
+data SignupRequest = SignupRequest
+  { signupUsername :: Text
+  , signupEmail    :: Text
+  , signupPassword :: Text
+  } deriving (Generic)
+
+signupFieldModifier :: String -> String
+signupFieldModifier = map toLower . drop (length "signup")
+
+instance ToJSON SignupRequest where
+  toJSON = genericToJSON defaultOptions { fieldLabelModifier = signupFieldModifier }
+instance FromJSON SignupRequest where
+  parseJSON = genericParseJSON defaultOptions { fieldLabelModifier = signupFieldModifier }
+
+data LoginRequest = LoginRequest
+  { loginUsername :: Text
+  , loginPassword :: Text
+  } deriving (Generic)
+
+instance ToJSON LoginRequest where
+  toJSON = genericToJSON defaultOptions { fieldLabelModifier = map toLower . drop (length "login") }
+instance FromJSON LoginRequest where
+  parseJSON = genericParseJSON defaultOptions { fieldLabelModifier = map toLower . drop (length "login") }
