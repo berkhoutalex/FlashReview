@@ -64,7 +64,7 @@ getCards authResult AppEnv{..} =
     Authenticated user -> do
       liftIO $ DB.getAllCardsDb appDbConn (API.userJwtId user)
 
-      throwError err401
+    _ -> throwError err401
 
 createCard :: AuthResult API.UserJWT -> AppEnv -> API.FlashcardRequest -> Handler API.Flashcard
 createCard authResult AppEnv{..} flashcardReq =
@@ -154,10 +154,10 @@ userLogin AppEnv{..} loginReq = do
 
                 eJWT <- liftIO $ makeJWT userJwt appJWTSettings Nothing
                 case eJWT of
-                    Left err -> do
+                    Left _ -> do
                       throwError $ err401 {errBody = BSC.pack "login failed! please try again!"}
                     Right r -> do
-                      liftIO $ do
+
                       return $ x (BSC.unpack r)
 
 userSignup :: AppEnv -> API.SignupRequest -> Handler API.User
