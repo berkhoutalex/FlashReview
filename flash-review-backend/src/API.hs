@@ -5,7 +5,7 @@
 {-# LANGUAGE TypeOperators   #-}
 {-# OPTIONS_GHC -Wno-name-shadowing #-}
 
-module API(FlashcardAPI, Flashcard(..), FlashcardRequest(..), flashcardToRequest, ReviewResult(..), Stats(..), User(..), SignupRequest(..), LoginRequest(..)) where
+module API(FlashcardAPI, Flashcard(..), FlashcardRequest(..), flashcardToRequest, ReviewResult(..), Stats(..), User(..), UserJWT(..), SignupRequest(..), LoginRequest(..)) where
 
 import           Data.Aeson          (FromJSON, ToJSON (toJSON), defaultOptions,
                                       fieldLabelModifier, genericParseJSON,
@@ -27,7 +27,7 @@ data Flashcard = Flashcard
   , interval    :: Int
   , easeFactor  :: Double
   , repetitions :: Int
-  , ownerId     :: Maybe UUID
+  , ownerId     :: UUID
   } deriving (Generic, Show)
 
 instance ToJSON Flashcard
@@ -68,13 +68,13 @@ flashcardToRequest Flashcard{..} = FlashcardRequest
   }
 
 type FlashcardAPI auths =
-       Auth auths User :> "cards" :> Get '[JSON] [Flashcard]
-  :<|> Auth auths User :> "cards" :> ReqBody '[JSON] FlashcardRequest :> Post '[JSON] Flashcard
-  :<|> Auth auths User :> "cards" :> Capture "id" UUID :> ReqBody '[JSON] FlashcardRequest :> Put '[JSON] Flashcard
-  :<|> Auth auths User :> "cards" :> Capture "id" UUID :> Delete '[JSON] NoContent
-  :<|> Auth auths User :> "review" :> "queue" :> Get '[JSON] [Flashcard]
-  :<|> Auth auths User :> "review" :> Capture "id" UUID :> ReqBody '[JSON] ReviewResult :> Post '[JSON] NoContent
-  :<|> Auth auths User :> "stats" :> Get '[JSON] Stats
+       Auth auths UserJWT :> "cards" :> Get '[JSON] [Flashcard]
+  :<|> Auth auths UserJWT :> "cards" :> ReqBody '[JSON] FlashcardRequest :> Post '[JSON] Flashcard
+  :<|> Auth auths UserJWT :> "cards" :> Capture "id" UUID :> ReqBody '[JSON] FlashcardRequest :> Put '[JSON] Flashcard
+  :<|> Auth auths UserJWT :> "cards" :> Capture "id" UUID :> Delete '[JSON] NoContent
+  :<|> Auth auths UserJWT :> "review" :> "queue" :> Get '[JSON] [Flashcard]
+  :<|> Auth auths UserJWT :> "review" :> Capture "id" UUID :> ReqBody '[JSON] ReviewResult :> Post '[JSON] NoContent
+  :<|> Auth auths UserJWT :> "stats" :> Get '[JSON] Stats
   :<|> "login" :> ReqBody '[JSON] LoginRequest :> Post '[JSON] (Headers '[Header "Set-Cookie" SetCookie, Header "Set-Cookie" SetCookie] String)
   :<|> "signup" :> ReqBody '[JSON] SignupRequest :> Post '[JSON] User
 
@@ -97,7 +97,17 @@ data User = User
   , username :: Text
   , email    :: Text
   , password :: Text
+  } deriving (Generic)
+
+
+data UserJWT = UserJWT
+  { userJwtId    :: UUID
+  , userJwtName  :: Text
+  , userJwtEmail :: Text
   } deriving (Generic, FromJWT, ToJWT)
+
+instance ToJSON UserJWT
+instance FromJSON UserJWT
 
 instance ToJSON User
 instance FromJSON User

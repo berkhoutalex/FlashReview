@@ -34,7 +34,7 @@ handleJsonResponse decoder response = do
 
 getAllCards :: Aff (Either String (Array Flashcard))
 getAllCards = do
-  response <- fetch (baseUrl <> "/cards") {}
+  response <- fetch (baseUrl <> "/cards") {credentials: Include}
   handleJsonResponse decodeJson response
 
 createCard :: Flashcard -> Aff (Either String Flashcard)
@@ -43,6 +43,7 @@ createCard card = do
         { method: POST
         , headers: { "Content-Type": "application/json" }
         , body: toJsonString card
+        , credentials: Include
         }
   response <- fetch (baseUrl <> "/cards") opts
   handleJsonResponse decodeJson response
@@ -54,6 +55,7 @@ updateCard card@(Flashcard c) = do
         { method: PUT
         , headers: { "Content-Type": "application/json" }
         , body: toJsonString card
+        , credentials: Include
         }
   response <- fetch (baseUrl <> "/cards/" <> idString) opts
   handleJsonResponse decodeJson response
@@ -61,7 +63,7 @@ updateCard card@(Flashcard c) = do
 deleteCard :: SerializableUUID -> Aff (Either String Unit)
 deleteCard id = do
   let idString = UUID.toString (UUID.unwrap id)
-      opts = { method: DELETE }
+      opts = { method: DELETE, credentials: Include }
   response <- fetch (baseUrl <> "/cards/" <> idString) opts
   if response.ok
     then pure $ Right unit
@@ -69,7 +71,7 @@ deleteCard id = do
 
 getReviewQueue :: Aff (Either String (Array Flashcard))
 getReviewQueue = do
-  response <- fetch (baseUrl <> "/review/queue") {}
+  response <- fetch (baseUrl <> "/review/queue") {credentials: Include}
   handleJsonResponse decodeJson response
 
 submitReview :: SerializableUUID -> ReviewResult -> Aff (Either String Unit)
@@ -79,6 +81,7 @@ submitReview id result = do
         { method: POST
         , headers: { "Content-Type": "application/json" }
         , body: toJsonString result
+        , credentials: Include
         }
   response <- fetch (baseUrl <> "/review/" <> idString) opts
   if response.ok
@@ -87,7 +90,7 @@ submitReview id result = do
 
 getStats :: Aff (Either String Stats)
 getStats = do
-  response <- fetch (baseUrl <> "/stats") {}
+  response <- fetch (baseUrl <> "/stats") {credentials: Include}
   handleJsonResponse decodeJson response
 
 login :: UserCredentials -> Aff (Either String String)
@@ -112,6 +115,7 @@ signup credentials = do
         { method: POST
         , headers: { "Content-Type": "application/json" }
         , body: toJsonString credentials
+        , credentials: Include -- Include cookies in the request
         }
   response <- fetch (baseUrl <> "/signup") opts
   handleJsonResponse decodeJson response

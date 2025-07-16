@@ -139,7 +139,7 @@ fromRow FlashcardRow{..} = API.Flashcard
   , API.interval    = rowInterval
   , API.easeFactor  = rowEaseFactor
   , API.repetitions = rowRepetitions
-  , API.ownerId     = Just rowUserId
+  , API.ownerId     = rowUserId
   }
 
 toRow :: API.Flashcard -> FlashcardRow
@@ -151,7 +151,7 @@ toRow card = FlashcardRow
   , rowInterval    = API.interval card
   , rowEaseFactor  = API.easeFactor card
   , rowRepetitions = API.repetitions card
-  , rowUserId      = maybe (error "ownerId is required") id (API.ownerId card)
+  , rowUserId      = API.ownerId card
   }
 
 instance PG.FromRow FlashcardRow where
@@ -189,7 +189,7 @@ fromUserRow UserRow{..} = API.User
   { API.userId = userId
   , API.username = userName
   , API.email = userEmail
-  , API.password = userPassword
+  , API.password = userPassword -- Needed for password verification during login
   }
 
 toUserRow :: API.User -> UserRow
