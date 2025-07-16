@@ -87,7 +87,7 @@ instance decodeJsonUser :: DecodeJson User where
     password <- obj .: "password"
     pure $ User { userId, username, email, password }
 
--- For creating new users or login
+
 newtype UserCredentials = UserCredentials
   { username :: String
   , email :: Maybe String

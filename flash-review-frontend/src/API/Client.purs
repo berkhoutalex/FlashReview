@@ -99,7 +99,7 @@ login credentials = do
         { method: POST
         , headers: { "Content-Type": "application/json" }
         , body: toJsonString credentials
-        , credentials: Include -- Include cookies in the request
+        , credentials: Include 
         }
   response <- fetch (baseUrl <> "/login") opts
   if response.ok
@@ -115,7 +115,7 @@ signup credentials = do
         { method: POST
         , headers: { "Content-Type": "application/json" }
         , body: toJsonString credentials
-        , credentials: Include -- Include cookies in the request
+        , credentials: Include 
         }
   response <- fetch (baseUrl <> "/signup") opts
   handleJsonResponse decodeJson response

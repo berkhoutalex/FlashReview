@@ -33,8 +33,6 @@ data Flashcard = Flashcard
 instance ToJSON Flashcard
 instance FromJSON Flashcard
 
--- FlashcardRequest is used for creating or updating flashcards
--- ownerId is omitted as it's determined from the authenticated user
 data FlashcardRequest = FlashcardRequest
   { reqId          :: UUID
   , reqFront       :: Text

@@ -189,7 +189,7 @@ fromUserRow UserRow{..} = API.User
   { API.userId = userId
   , API.username = userName
   , API.email = userEmail
-  , API.password = userPassword -- Needed for password verification during login
+  , API.password = userPassword
   }
 
 toUserRow :: API.User -> UserRow
@@ -246,7 +246,6 @@ setupSchema conn = do
   void $ PG.execute_ conn
     "CREATE INDEX IF NOT EXISTS idx_flashcards_user_id ON flashcards (user_id)"
 
-  -- Add foreign key if it doesn't exist (this requires a more complex check)
   void $ PG.execute_ conn
     "DO $$ \
     \BEGIN \
@@ -262,7 +261,7 @@ setupSchema conn = do
     \END; \
     \$$"
 
-  -- Add check for existing columns and add if missing
+
   void $ PG.execute_ conn
     "DO $$ \
     \BEGIN \
@@ -378,7 +377,7 @@ authenticateUserDb conn username password = do
     \WHERE username = ?" [username]
   case rows of
     [userRow@UserRow{..}] -> do
-      -- Convert Text to ByteString for bcrypt validation
+
       let storedHash = TE.encodeUtf8 userPassword
           providedPass = TE.encodeUtf8 password
       if validatePassword storedHash providedPass
@@ -388,13 +387,13 @@ authenticateUserDb conn username password = do
 
 signupUserDb :: PG.Connection -> API.User -> IO API.User
 signupUserDb conn user = do
-  -- Hash the password using bcrypt
+
   let rawPassword = TE.encodeUtf8 $ API.password user
   mHashedPass <- hashPasswordUsingPolicy slowerBcryptHashingPolicy rawPassword
   case mHashedPass of
     Nothing -> error "Failed to hash password"
     Just hashedPass -> do
-      -- Create a new user with the hashed password
+
       let hashedUser = user { API.password = TE.decodeUtf8 hashedPass }
           UserRow{..} = toUserRow hashedUser
       void $ PG.execute conn
