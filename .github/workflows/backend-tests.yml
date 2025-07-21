@@ -92,13 +92,13 @@ jobs:
       working-directory: ./flash-review-backend
       run: |
         stack install hpc-lcov
-        hpc-lcov --out lcov.info
+        hpc-lcov
         
     - name: Upload coverage report
       uses: actions/upload-artifact@v4
       with:
         name: coverage-report
-        path: ./flash-review-backend/.hpc/combined/custom/hpc_index.html
+        path: ./flash-review-backend/lcov.info
         
     - name: Add test summary comment
       if: github.event_name == 'pull_request'
