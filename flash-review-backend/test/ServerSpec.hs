@@ -39,7 +39,6 @@ bodyContains s = MatchBody $ \_ body ->
      else Just $ "Expected body to contain: " ++ s
 
 -- Helper for matching any value in header tests
--- No header matching function needed here
 
 testConfig :: DatabaseConfig
 testConfig = DatabaseConfig
