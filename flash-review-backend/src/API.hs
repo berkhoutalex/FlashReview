@@ -28,7 +28,7 @@ data Flashcard = Flashcard
   , easeFactor  :: Double
   , repetitions :: Int
   , ownerId     :: UUID
-  } deriving (Generic, Show)
+  } deriving (Generic, Show, Eq)
 
 instance ToJSON Flashcard
 instance FromJSON Flashcard
@@ -41,8 +41,7 @@ data FlashcardRequest = FlashcardRequest
   , reqInterval    :: Int
   , reqEaseFactor  :: Double
   , reqRepetitions :: Int
-  } deriving (Generic, Show)
-
+  } deriving (Generic, Show, Eq)
 instance ToJSON FlashcardRequest where
   toJSON = genericToJSON defaultOptions { fieldLabelModifier = \s -> case drop (length "req") s of
     (x:xs) -> toLower x : xs
@@ -78,14 +77,14 @@ type FlashcardAPI auths =
 
 newtype ReviewResult = ReviewResult
   { rating :: Int
-  } deriving (Generic)
+  } deriving (Generic, Show, Eq)
 
 instance ToJSON ReviewResult
 instance FromJSON ReviewResult
 
 newtype Stats = Stats
   { dueToday :: Int
-  } deriving (Generic)
+  } deriving (Generic, Show, Eq)
 
 instance ToJSON Stats
 instance FromJSON Stats
@@ -95,14 +94,16 @@ data User = User
   , username :: Text
   , email    :: Text
   , password :: Text
-  } deriving (Generic)
+  } deriving (Generic, Show, Eq)
+
 
 
 data UserJWT = UserJWT
   { userJwtId    :: UUID
   , userJwtName  :: Text
   , userJwtEmail :: Text
-  } deriving (Generic, FromJWT, ToJWT)
+  } deriving (Generic, FromJWT, ToJWT, Show, Eq)
+
 
 instance ToJSON UserJWT
 instance FromJSON UserJWT
@@ -114,7 +115,7 @@ data SignupRequest = SignupRequest
   { signupUsername :: Text
   , signupEmail    :: Text
   , signupPassword :: Text
-  } deriving (Generic)
+  } deriving (Generic, Show, Eq)
 
 signupFieldModifier :: String -> String
 signupFieldModifier = map toLower . drop (length "signup")
@@ -127,7 +128,7 @@ instance FromJSON SignupRequest where
 data LoginRequest = LoginRequest
   { loginUsername :: Text
   , loginPassword :: Text
-  } deriving (Generic)
+  } deriving (Generic, Show, Eq)
 
 instance ToJSON LoginRequest where
   toJSON = genericToJSON defaultOptions { fieldLabelModifier = map toLower . drop (length "login") }

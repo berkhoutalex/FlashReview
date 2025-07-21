@@ -21,6 +21,7 @@ module Database
   , setupSchema
   , authenticateUserDb
   , signupUserDb
+  , makeConnectionString
   ) where
 
 import qualified API

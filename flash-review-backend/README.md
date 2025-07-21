@@ -1,5 +1,7 @@
 # Flash Review Backend
 
+[![Backend Tests](https://github.com/berkhoutalex/FlashReview/actions/workflows/backend-tests.yml/badge.svg)](https://github.com/berkhoutalex/FlashReview/actions/workflows/backend-tests.yml)
+
 This is the backend for the Flash Review application that uses PostgreSQL for data persistence.
 
 ## Overview
@@ -69,6 +71,38 @@ stack exec flash-review-backend-exe
 
 The server will start on port 8081.
 
+## Running Tests
+
+The project includes a comprehensive test suite that covers database operations, API functionality, and server endpoints.
+
+### Setup Test Database
+
+Before running the tests, you need to set up a test database. Use the provided script:
+
+On Linux/Mac:
+```bash
+./init_test_db.sh
+```
+
+On Windows:
+```powershell
+.\init_test_db.ps1
+```
+
+### Run Tests
+
+Run the tests using Stack:
+
+```bash
+stack test
+```
+
+The test suite includes:
+
+1. **Database Tests**: Tests for database operations like creating, reading, updating, and deleting flashcards and users.
+2. **API Tests**: Tests for JSON serialization/deserialization of data types.
+3. **Server Tests**: Tests for API endpoints, authentication, and business logic.
+
 ## API Endpoints
 
 The backend provides the following endpoints:
@@ -88,6 +122,7 @@ A flashcard has the following structure:
 ```json
 {
   "id": "UUID",
+  "ownerId": "UUID",
   "front": "Question text",
   "back": "Answer text",
   "nextReview": "2023-07-06T12:00:00Z",

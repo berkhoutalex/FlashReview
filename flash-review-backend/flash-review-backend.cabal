@@ -39,6 +39,7 @@ library
     , base >=4.7 && <5
     , bcrypt
     , bytestring
+    , case-insensitive
     , esqueleto
     , http-types
     , monad-logger
@@ -78,6 +79,7 @@ executable flash-review-backend-exe
     , base >=4.7 && <5
     , bcrypt
     , bytestring
+    , case-insensitive
     , esqueleto
     , flash-review-backend
     , http-types
@@ -108,6 +110,10 @@ test-suite flash-review-backend-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      APISpec
+      DatabaseSpec
+      MainSpec
+      ServerSpec
       Paths_flash_review_backend
   autogen-modules:
       Paths_flash_review_backend
@@ -115,12 +121,17 @@ test-suite flash-review-backend-test
       test
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      aeson
+      QuickCheck
+    , aeson
     , base >=4.7 && <5
     , bcrypt
     , bytestring
+    , case-insensitive
     , esqueleto
     , flash-review-backend
+    , hspec
+    , hspec-wai
+    , hspec-wai-json
     , http-types
     , monad-logger
     , mtl
@@ -142,5 +153,6 @@ test-suite flash-review-backend-test
     , uuid
     , wai
     , wai-cors
+    , wai-extra
     , warp
   default-language: Haskell2010
