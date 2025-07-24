@@ -38,6 +38,7 @@ dependencies:
 - warp
 - wai-cors
 - bytestring
+- case-insensitive
 - resource-pool
 - monad-logger
 - transformers
@@ -89,3 +90,21 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - flash-review-backend
+    - hspec
+    - hspec-wai
+    - hspec-wai-json
+    - aeson
+    - bytestring
+    - text
+    - time
+    - postgresql-simple
+    - uuid
+    - warp
+    - http-types
+    - servant-server
+    - servant-client
+    - servant-auth
+    - servant-auth-server
+    - QuickCheck
+    - wai
+    - wai-extra

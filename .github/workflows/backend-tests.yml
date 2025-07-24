@@ -1,0 +1,96 @@
+name: Backend Tests
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'flash-review-backend/**'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'flash-review-backend/**'
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+          
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v3
+
+    - name: Set up Haskell
+      uses: haskell-actions/setup@v2
+      with:
+        ghc-version: '9.4.7' 
+        cabal-version: '3.10.1.0'
+        enable-stack: true
+        stack-version: 'latest'
+
+    - name: Cache Stack dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.stack
+          .stack-work
+        key: ${{ runner.os }}-stack-${{ hashFiles('flash-review-backend/stack.yaml', 'flash-review-backend/package.yaml') }}
+        restore-keys: |
+          ${{ runner.os }}-stack-
+
+    - name: Create test database
+      run: |
+        PGPASSWORD=postgres psql -h localhost -U postgres -c "CREATE DATABASE flashcards_test;"
+      
+    - name: Set up test database
+      working-directory: ./flash-review-backend
+      run: |
+        chmod +x ci/setup-test-db.sh
+        ./ci/setup-test-db.sh
+      
+    - name: Build dependencies
+      working-directory: ./flash-review-backend
+      run: |
+        stack build --only-dependencies
+        
+    - name: Build project
+      working-directory: ./flash-review-backend
+      run: |
+        stack build
+        
+    - name: Run tests
+      working-directory: ./flash-review-backend
+      run: |
+        stack test --coverage
+      env:
+        PGHOST: localhost
+        PGUSER: postgres
+        PGPASSWORD: postgres
+        PGDATABASE: flashcards_test
+        
+    - name: Generate coverage report
+      working-directory: ./flash-review-backend
+      run: |
+        stack install hpc-lcov
+        hpc-lcov
+        
+    - name: Upload coverage report
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-report
+        path: ./flash-review-backend/lcov.info
