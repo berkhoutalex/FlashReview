@@ -11,7 +11,7 @@ import Data.UUID (UUID)
 import Data.UUID as UUID
 
 newtype SerializableUUID = SerializableUUID UUID
-
+derive instance Eq SerializableUUID
 instance encodeJsonSerializableUUID :: EncodeJson SerializableUUID where
   encodeJson (SerializableUUID uuid) = fromString (UUID.toString uuid)
 

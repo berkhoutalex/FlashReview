@@ -1,0 +1,135 @@
+[
+  [
+    "Flash Review Frontend Tests API.Client createCard should create and return a flashcard on success",
+    {
+      "timestamp": "1753326560789.0",
+      "success": false
+    }
+  ],
+  [
+    "Flash Review Frontend Tests API.Client deleteCard should delete a flashcard and return success",
+    {
+      "timestamp": "1753326560789.0",
+      "success": false
+    }
+  ],
+  [
+    "Flash Review Frontend Tests API.Client getAllCards should return flashcards on success",
+    {
+      "timestamp": "1753326560789.0",
+      "success": false
+    }
+  ],
+  [
+    "Flash Review Frontend Tests API.Client getStats should return user stats",
+    {
+      "timestamp": "1753326560789.0",
+      "success": false
+    }
+  ],
+  [
+    "Flash Review Frontend Tests API.Client login should log in a user and return user data",
+    {
+      "timestamp": "1753326560789.0",
+      "success": false
+    }
+  ],
+  [
+    "Flash Review Frontend Tests API.Client signup should sign up a user and return user data",
+    {
+      "timestamp": "1753326560789.0",
+      "success": false
+    }
+  ],
+  [
+    "Flash Review Frontend Tests API.Client submitReview should submit a review and return updated flashcard",
+    {
+      "timestamp": "1753326560789.0",
+      "success": false
+    }
+  ],
+  [
+    "Flash Review Frontend Tests API.Client updateCard should update and return the flashcard",
+    {
+      "timestamp": "1753326560789.0",
+      "success": false
+    }
+  ],
+  [
+    "Flash Review Frontend Tests API.Types Flashcard should encode and decode correctly",
+    {
+      "timestamp": "1753326560789.0",
+      "success": true
+    }
+  ],
+  [
+    "Flash Review Frontend Tests API.Types ReviewResult should encode and decode correctly",
+    {
+      "timestamp": "1753326560789.0",
+      "success": true
+    }
+  ],
+  [
+    "Flash Review Frontend Tests API.Types User should encode and decode correctly",
+    {
+      "timestamp": "1753326560789.0",
+      "success": true
+    }
+  ],
+  [
+    "Flash Review Frontend Tests API.Types UserCredentials should encode and decode correctly",
+    {
+      "timestamp": "1753326560789.0",
+      "success": true
+    }
+  ],
+  [
+    "Flash Review Frontend Tests Components App Component should initialize with correct default state",
+    {
+      "timestamp": "1753326560789.0",
+      "success": true
+    }
+  ],
+  [
+    "Flash Review Frontend Tests Components FlashcardForm Component should render form fields",
+    {
+      "timestamp": "1753326560789.0",
+      "success": true
+    }
+  ],
+  [
+    "Flash Review Frontend Tests Components FlashcardList Component should render flashcards",
+    {
+      "timestamp": "1753326560789.0",
+      "success": true
+    }
+  ],
+  [
+    "Flash Review Frontend Tests Components Login Component should render login form",
+    {
+      "timestamp": "1753326560789.0",
+      "success": true
+    }
+  ],
+  [
+    "Flash Review Frontend Tests Components Review Component should render review interface",
+    {
+      "timestamp": "1753326560789.0",
+      "success": true
+    }
+  ],
+  [
+    "Flash Review Frontend Tests Components Signup Component should render signup form",
+    {
+      "timestamp": "1753326560789.0",
+      "success": true
+    }
+  ],
+  [
+    "Flash Review Frontend Tests Components Stats Component should render statistics",
+    {
+      "timestamp": "1753326560789.0",
+      "success": true
+    }
+  ]
+]

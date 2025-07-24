@@ -14,7 +14,7 @@ import Data.String.Pattern (Pattern(..))
 
 
 newtype SerializableDateTime = SerializableDateTime DateTime
-
+derive instance Eq SerializableDateTime
 instance encodeJsonSerializableDateTime :: EncodeJson SerializableDateTime where
   encodeJson (SerializableDateTime dt) = 
     case Formatter.formatDateTime "YYYY-MM-DDTHH:mm:ss.SSSZ" dt of

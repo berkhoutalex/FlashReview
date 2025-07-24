@@ -48,6 +48,48 @@ This is the PureScript frontend for the Flash Review application, a flashcard ap
 ## Project Structure
 
 - `src/` - PureScript source files
+- `test/` - Test files
+
+## Running Tests
+
+To run the tests:
+
+```bash
+npm test
+```
+
+This will use Spago to run the test suite, which uses PureScript Spec as the testing framework.
+
+### Test Structure
+
+- `test/Main.purs` - Main test entry point
+- `test/API/Types/Spec.purs` - Tests for API data types
+- `test/API/Client/Spec.purs` - Tests for API client functions
+- `test/Components/Spec.purs` - Tests for UI components
+
+### Testing Approach
+
+The tests use PureScript's Spec testing library. The tests are organized as follows:
+
+1. **API Types Tests**: These test the JSON encoding and decoding of the application's data types.
+2. **API Client Tests**: These test the API client functions with mock fetch responses.
+3. **Components Tests**: These contain placeholder tests for Halogen components.
+
+#### Required Dependencies
+
+For running the tests, ensure you have these dependencies:
+- `purescript-spec`: For the testing framework
+- `purescript-datetime`: For date/time operations
+- `purescript-formatters`: For parsing date strings
+- `purescript-uuid`: For UUID operations
+
+#### Working with UUIDs and DateTimes in Tests
+
+The test suite includes helper functions for parsing string representations of UUIDs and DateTimes:
+- `parseUUID`: Converts string to UUID type
+- `parseDateTime`: Converts string to DateTime type
+
+To extend the component tests, you'll need to add a proper Halogen testing library or create a custom testing harness. The current implementation focuses on testing the data layer of the application.
   - `API/` - API client modules for communicating with the backend
   - `Components/` - Halogen UI components
   - `Main.purs` - Application entry point

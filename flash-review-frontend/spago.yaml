@@ -28,7 +28,20 @@ package:
     - uuid
   test:
     main: Test.Main
-    dependencies: []
+    dependencies:
+      - spec
+      - spec-discovery
+      - aff
+      - argonaut
+      - spec-mocha
+      - spec-quickcheck
+      - aff-promise
+      - strings
+      - uuid
+      - formatters
+      - datetime
+      - js-date
+      - now
 workspace:
   packageSet:
     registry: 65.1.0
