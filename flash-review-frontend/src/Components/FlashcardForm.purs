@@ -15,6 +15,7 @@ import Halogen.HTML.Properties as HP
 import Halogen.HTML.CSS as HCSS
 import CSS as CSS
 import CSS.Cursor (pointer, notAllowed)
+
 type State =
   { front :: String
   , back :: String

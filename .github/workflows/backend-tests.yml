@@ -74,14 +74,9 @@ jobs:
         stack build
         
     - name: Run tests
-      id: run-tests
       working-directory: ./flash-review-backend
       run: |
-        TEST_OUTPUT=$(stack test --coverage 2>&1)
-        echo "test-output<<EOF" >> $GITHUB_OUTPUT
-        echo "$TEST_OUTPUT" >> $GITHUB_OUTPUT
-        echo "EOF" >> $GITHUB_OUTPUT
-        echo "$TEST_OUTPUT"
+        stack test --coverage
       env:
         PGHOST: localhost
         PGUSER: postgres
@@ -99,39 +94,3 @@ jobs:
       with:
         name: coverage-report
         path: ./flash-review-backend/lcov.info
-        
-    - name: Add test summary comment
-      if: github.event_name == 'pull_request'
-      uses: actions/github-script@v6
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        script: |
-          const fs = require('fs');
-          try {
-            // Get test output and format it
-            const testOutput = process.env.TEST_OUTPUT;
-            
-            // Create a formatted comment
-            const comment = `## Backend Test Results
-            
-            ✅ All tests have passed!
-            
-            ### Summary
-            - Database Tests: Passed
-            - API Tests: Passed
-            - Server Tests: Passed
-            
-            [View detailed test report](${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID})
-            `;
-            
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: comment
-            });
-          } catch (error) {
-            console.error('Failed to create test summary comment:', error);
-          }
-      env:
-        TEST_OUTPUT: "${{ steps.run-tests.outputs.test-output }}"
