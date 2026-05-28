@@ -11,6 +11,9 @@ on:
       - 'flash-review-backend/**'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   test:
     name: Build and Test
