@@ -189,8 +189,42 @@ build cache. Later builds are faster only when Docker layer caching hits.
 
 ## Testing
 
-The existing backend suite continues to run against local Postgres; the `DATABASE_URL`
-fallback preserves the `PG*` path that CI uses, so `backend-tests.yml` needs no change.
+### Pre-existing condition: the HTTP test suite is dormant
+
+Discovered while planning. `test/Spec.hs` is the test entrypoint and never imports
+`MainSpec` — the module that aggregates `APISpec`, `DatabaseSpec`, and `ServerSpec`.
+`Spec.hs` instead re-implements roughly five tests inline. What CI runs today is those
+five tests; the eight HTTP-level tests in `ServerSpec.hs` are compiled but never
+executed.
+
+Two dormant defects are visible by inspection and will surface once the suite is wired
+up:
+
+- `ServerSpec.hs` calls `generateKey` twice independently — line 68 in `makeTestApp` and
+  line 95 in `getTestToken`. Tokens are therefore signed with one key and validated
+  against another, so every authenticated test asserting 200 should receive 401.
+- `DatabaseSpec.hs:100-111` ("should update a flashcard") never calls `updateCardDb`. It
+  creates a card, constructs an `updatedCard` value, then asserts the database returns
+  the updated version.
+
+These are predictions from reading the code, not observed failures — the suite has not
+been run. Neither is caused by this migration, but both sit in code the migration
+changes.
+
+### Approach
+
+Reviving the suite is a **prerequisite task**, before any migration work. The connection
+pool and `JWT_SECRET` changes are precisely what these tests would catch, and TDD on them
+is meaningless while the suite does not execute. The `JWT_SECRET` change also makes the
+shared-key fix natural, since both `makeTestApp` and `getTestToken` will derive their key
+from one secret.
+
+Replacing `Spec.hs`'s inline tests with a delegation to `MainSpec` loses no coverage:
+`DatabaseSpec` strictly supersedes the inline database tests, and `APISpec` supersedes the
+inline serialization test.
+
+The `DATABASE_URL` fallback preserves the `PG*` path that CI uses, so `backend-tests.yml`
+needs no change.
 
 Post-deploy verification is manual, in order:
 
