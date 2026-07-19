@@ -68,9 +68,12 @@ type FlashcardAPI auths =
        Auth auths UserJWT :> "cards" :> Get '[JSON] [Flashcard]
   :<|> Auth auths UserJWT :> "cards" :> ReqBody '[JSON] FlashcardRequest :> Post '[JSON] Flashcard
   :<|> Auth auths UserJWT :> "cards" :> Capture "id" UUID :> ReqBody '[JSON] FlashcardRequest :> Put '[JSON] Flashcard
-  :<|> Auth auths UserJWT :> "cards" :> Capture "id" UUID :> Delete '[JSON] NoContent
+  -- 204 via the explicit Verb form rather than DeleteNoContent/PostNoContent:
+  -- servant-auth-server 0.4.9.0's AddSetCookieApi type family has no
+  -- NoContentVerb instance, so the idiomatic aliases fail to compile under Auth.
+  :<|> Auth auths UserJWT :> "cards" :> Capture "id" UUID :> Verb 'DELETE 204 '[JSON] NoContent
   :<|> Auth auths UserJWT :> "review" :> "queue" :> Get '[JSON] [Flashcard]
-  :<|> Auth auths UserJWT :> "review" :> Capture "id" UUID :> ReqBody '[JSON] ReviewResult :> Post '[JSON] NoContent
+  :<|> Auth auths UserJWT :> "review" :> Capture "id" UUID :> ReqBody '[JSON] ReviewResult :> Verb 'POST 204 '[JSON] NoContent
   :<|> Auth auths UserJWT :> "stats" :> Get '[JSON] Stats
   :<|> "login" :> ReqBody '[JSON] LoginRequest :> Post '[JSON] (Headers '[Header "Set-Cookie" SetCookie, Header "Set-Cookie" SetCookie] String)
   :<|> "signup" :> ReqBody '[JSON] SignupRequest :> Post '[JSON] User
