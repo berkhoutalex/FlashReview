@@ -705,10 +705,20 @@ module Server( server, initializeApp, resolveJwtKey, AppEnv(..) ) where
 Add imports:
 
 ```haskell
+import           Crypto.JOSE.JWK            (JWK)
 import qualified Data.ByteString.Char8      as BS8
 import           System.Environment         (lookupEnv)
 import           System.IO                  (hPutStrLn, stderr)
 ```
+
+Add `jose` to the **top-level** `dependencies:` list in `package.yaml` (not just the test suite — `Server.hs` is in the library and `resolveJwtKey`'s signature mentions `JWK`):
+
+```yaml
+- bcrypt
+- jose
+```
+
+This correction comes from Task 0, which hit the same problem: `Servant.Auth.Server` re-exports the *value* `fromSecret` but **not** the *type* `JWK`. `JWK`'s home module is `Crypto.JOSE.JWK` in the `jose` package, which is present transitively via `servant-auth-server` but must be declared to be importable. Task 0 already added `jose` to the test-suite dependencies; this adds it for the library.
 
 Add the function above `initializeApp`:
 
@@ -745,7 +755,7 @@ initializeApp = do
   pure $ AppEnv pool cookieSettings jwtSettings
 ```
 
-`fromSecret`, `JWK`, `generateKey`, `makeJWT`, and `verifyJWT` all come from `Servant.Auth.Server`, already imported.
+`fromSecret`, `generateKey`, `makeJWT`, and `verifyJWT` come from `Servant.Auth.Server`, already imported. The `JWK` *type* does not — see the import note above.
 
 - [ ] **Step 4: Run the tests to verify they pass**
 
