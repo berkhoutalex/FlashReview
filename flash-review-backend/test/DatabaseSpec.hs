@@ -6,7 +6,8 @@ module DatabaseSpec (spec) where
 
 import           API
 import           Control.Exception          (bracket)
-import           Data.Time.Clock            (getCurrentTime)
+import           Data.Time.Clock            (UTCTime (..), diffTimeToPicoseconds,
+                                              getCurrentTime, picosecondsToDiffTime)
 import           Data.UUID                  (UUID)
 import qualified Data.UUID.V4               as UUID
 import           Database
@@ -49,10 +50,19 @@ createTestUser conn = do
         }
   signupUserDb conn user
 
+-- | PostgreSQL's TIMESTAMP WITH TIME ZONE only stores microsecond precision,
+-- while Haskell's UTCTime carries picoseconds. Round-tripping a value through
+-- the database rounds away anything finer than a microsecond, so a freshly
+-- generated timestamp must be truncated up front or later equality checks
+-- against the database's response will spuriously fail.
+truncateToMicroseconds :: UTCTime -> UTCTime
+truncateToMicroseconds (UTCTime day dayTime) =
+  UTCTime day (picosecondsToDiffTime ((diffTimeToPicoseconds dayTime `div` 1000000) * 1000000))
+
 createTestFlashcard :: UUID -> IO Flashcard
 createTestFlashcard userId = do
   cardId <- UUID.nextRandom
-  now <- Data.Time.Clock.getCurrentTime
+  now <- truncateToMicroseconds <$> Data.Time.Clock.getCurrentTime
   pure Flashcard
     { id = cardId
     , front =  "Test Front"
@@ -106,6 +116,7 @@ spec = do
 
         let updatedCard = card { front =  "Updated Front", back =  "Updated Back" }
 
+        _ <- updateCardDb conn (id card) updatedCard
 
         mCard <- getCardByIdDb conn (id card) (userId user)
         mCard `shouldBe` Just updatedCard

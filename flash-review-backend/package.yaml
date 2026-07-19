@@ -108,3 +108,4 @@ tests:
     - QuickCheck
     - wai
     - wai-extra
+    - jose

@@ -24,6 +24,7 @@ import           Database                    (DatabaseConfig (..))
 import qualified Database                    as DB
 import           Server                      (AppEnv (..), server)
 
+import           Crypto.JOSE.JWK             (JWK)
 import           Network.Wai.Middleware.Cors
 import           Servant
 import           Servant.Auth.Server
@@ -49,11 +50,19 @@ testConfig = DatabaseConfig
   , dbDatabase = "flashcards_test"
   }
 
+testKey :: JWK
+testKey = fromSecret (BS8.pack "flashreview-test-secret-not-for-production-use")
+
 makeTestApp :: IO Application
 makeTestApp = do
   let connStr = DB.makeConnectionString testConfig
   conn <- PG.connectPostgreSQL connStr
 
+  -- hspec-wai's `with` runs this action fresh before every `it`, so the
+  -- database must be reset each time; otherwise the "testuser" signup below
+  -- collides with the row the previous test left behind.
+  _ <- PG.execute_ conn "DROP TABLE IF EXISTS flashcards CASCADE"
+  _ <- PG.execute_ conn "DROP TABLE IF EXISTS users CASCADE"
   DB.setupSchema conn
 
   userId <- UUID.nextRandom
@@ -65,8 +74,7 @@ makeTestApp = do
         }
   _ <- DB.signupUserDb conn user
 
-  myKey <- generateKey
-  let jwtSettings = defaultJWTSettings myKey
+  let jwtSettings = defaultJWTSettings testKey
   let cookieSettings = defaultCookieSettings
         { cookieIsSecure = NotSecure
         , cookieXsrfSetting = Nothing
@@ -92,8 +100,7 @@ getTestToken = do
   case mUser of
     Nothing -> error "Test user authentication failed"
     Just user -> do
-      myKey <- generateKey
-      let jwtSettings = defaultJWTSettings myKey
+      let jwtSettings = defaultJWTSettings testKey
 
       let userJwt = UserJWT
             { userJwtId = userId user
@@ -121,7 +128,9 @@ spec = do
                 , key "password" .= ("password" :: String)
                 ]
 
-          post (BS8.pack "/signup") signupReq
+          request methodPost (BS8.pack "/signup")
+            [(hContentType, BS8.pack "application/json")]
+            signupReq
             `shouldRespondWith` 200
 
         it "should allow login" $ do
@@ -130,7 +139,9 @@ spec = do
                 , key "password" .= ("password" :: String)
                 ]
 
-          post (BS8.pack "/login") loginReq
+          request methodPost (BS8.pack "/login")
+            [(hContentType, BS8.pack "application/json")]
+            loginReq
             `shouldRespondWith` 200
 
       describe "Flashcard Operations" $ do
@@ -142,14 +153,16 @@ spec = do
                 [ key "id" .= show uuid
                 , key "front" .= ("Test Front" :: String)
                 , key "back" .= ("Test Back" :: String)
-                , key "nextReview" .= show now
+                , key "nextReview" .= now
                 , key "interval" .= (1 :: Int)
                 , key "easeFactor" .= (2.5 :: Double)
                 , key "repetitions" .= (0 :: Int)
                 ]
 
           request methodPost (BS8.pack "/cards")
-            [(CI.mk $ BS8.pack "Authorization", BS8.pack "Bearer " <> BSL.toStrict token)]
+            [ (hContentType, BS8.pack "application/json")
+            , (CI.mk $ BS8.pack "Authorization", BS8.pack "Bearer " <> BSL.toStrict token)
+            ]
             cardReq
             `shouldRespondWith` 200
           request methodGet (BS8.pack "/cards")
@@ -165,14 +178,16 @@ spec = do
                 [ key "id" .= show uuid
                 , key "front" .= ("Test Front" :: String)
                 , key "back" .= ("Test Back" :: String)
-                , key "nextReview" .= show now
+                , key "nextReview" .= now
                 , key "interval" .= (1 :: Int)
                 , key "easeFactor" .= (2.5 :: Double)
                 , key "repetitions" .= (0 :: Int)
                 ]
 
           request methodPost (BS8.pack "/cards")
-            [(CI.mk $ BS8.pack "Authorization", BS8.pack "Bearer " <> BSL.toStrict token)]
+            [ (hContentType, BS8.pack "application/json")
+            , (CI.mk $ BS8.pack "Authorization", BS8.pack "Bearer " <> BSL.toStrict token)
+            ]
             cardReq
             `shouldRespondWith` 200
 
@@ -180,14 +195,16 @@ spec = do
                 [ key "id" .= show uuid
                 , key "front" .= ("Updated Front" :: String)
                 , key "back" .= ("Updated Back" :: String)
-                , key "nextReview" .= show now
+                , key "nextReview" .= now
                 , key "interval" .= (1 :: Int)
                 , key "easeFactor" .= (2.5 :: Double)
                 , key "repetitions" .= (0 :: Int)
                 ]
 
           request methodPut (BS8.pack "/cards/" <> BS8.pack (show uuid))
-            [(CI.mk $ BS8.pack "Authorization", BS8.pack "Bearer " <> BSL.toStrict token)]
+            [ (hContentType, BS8.pack "application/json")
+            , (CI.mk $ BS8.pack "Authorization", BS8.pack "Bearer " <> BSL.toStrict token)
+            ]
             updateReq
             `shouldRespondWith` 200 { matchBody = bodyContains "Updated Front" }
 
@@ -200,14 +217,16 @@ spec = do
                 [ key "id" .= show uuid
                 , key "front" .= ("Test Front" :: String)
                 , key "back" .= ("Test Back" :: String)
-                , key "nextReview" .= show now
+                , key "nextReview" .= now
                 , key "interval" .= (1 :: Int)
                 , key "easeFactor" .= (2.5 :: Double)
                 , key "repetitions" .= (0 :: Int)
                 ]
 
           request methodPost (BS8.pack "/cards")
-            [(CI.mk $ BS8.pack "Authorization", BS8.pack "Bearer " <> BSL.toStrict token)]
+            [ (hContentType, BS8.pack "application/json")
+            , (CI.mk $ BS8.pack "Authorization", BS8.pack "Bearer " <> BSL.toStrict token)
+            ]
             cardReq
             `shouldRespondWith` 200
 
@@ -233,14 +252,16 @@ spec = do
                 [ key "id" .= show uuid
                 , key "front" .= ("Test Front" :: String)
                 , key "back" .= ("Test Back" :: String)
-                , key "nextReview" .= show now
+                , key "nextReview" .= now
                 , key "interval" .= (1 :: Int)
                 , key "easeFactor" .= (2.5 :: Double)
                 , key "repetitions" .= (0 :: Int)
                 ]
 
           request methodPost (BS8.pack "/cards")
-            [(CI.mk $ BS8.pack "Authorization", BS8.pack "Bearer " <> BSL.toStrict token)]
+            [ (hContentType, BS8.pack "application/json")
+            , (CI.mk $ BS8.pack "Authorization", BS8.pack "Bearer " <> BSL.toStrict token)
+            ]
             cardReq
             `shouldRespondWith` 200
 
@@ -249,7 +270,9 @@ spec = do
                 ]
 
           request methodPost (BS8.pack "/review/" <> BS8.pack (show uuid))
-            [(CI.mk $ BS8.pack "Authorization", BS8.pack "Bearer " <> BSL.toStrict token)]
+            [ (hContentType, BS8.pack "application/json")
+            , (CI.mk $ BS8.pack "Authorization", BS8.pack "Bearer " <> BSL.toStrict token)
+            ]
             reviewReq
             `shouldRespondWith` 204
 
