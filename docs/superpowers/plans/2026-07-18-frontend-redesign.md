@@ -20,6 +20,7 @@
 - Icons: dependency-free Unicode glyphs (e.g. `☰`, `⚡`, `🗑`), not an SVG/icon-font library. This is a deliberate simplification of the spec's "small inline SVG icons" language — Halogen has no ergonomic built-in SVG element DSL without adding a new package, and Unicode glyphs achieve the same "icon + label" sidebar look with zero new dependencies and zero risk of malformed markup.
 - No new automated tests are added (per spec's Testing & Verification section) — this is a presentation-layer-only change. Every task's verification step is `npm run build` (compiler as correctness gate) plus, for user-visible tasks, a manual visual check via `npm run bundle && npm run serve`.
 - All work happens on the `frontend-redesign` branch (already checked out) — never commit to `main`.
+- **Shell note (this machine):** run `npm run build` / `npm run bundle` / `npm run serve` via **PowerShell**, not the Bash/Git-Bash tool. Git Bash's MSYS2 process spawning causes `spago`'s `purs.cmd` invocation to fail with `EINVAL` (a very long, glob-heavy command line trips something in how Git Bash mediates the spawn) even though the exact same command succeeds cleanly in PowerShell. Confirmed both `npm run build` and `npm run bundle` succeed via PowerShell with zero errors/warnings.
 
 ---
 
