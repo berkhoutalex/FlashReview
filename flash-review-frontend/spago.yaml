@@ -21,14 +21,17 @@ package:
     - halogen-css
     - halogen-subscriptions
     - http-methods
+    - lists
     - maybe
     - media-types
     - prelude
-    - spec
     - uuid
   test:
     main: Test.Main
-    dependencies: []
+    dependencies:
+      - enums
+      - partial
+      - spec
 workspace:
   packageSet:
     registry: 65.1.0

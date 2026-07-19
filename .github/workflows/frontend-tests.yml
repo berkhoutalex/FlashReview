@@ -1,0 +1,44 @@
+name: Frontend Tests
+
+on:
+  pull_request:
+    paths:
+      - 'flash-review-frontend/**'
+      - '.github/workflows/frontend-tests.yml'
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v4
+
+    - name: Set up Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: flash-review-frontend/package-lock.json
+
+    - name: Cache PureScript packages
+      uses: actions/cache@v4
+      with:
+        path: |
+          flash-review-frontend/.spago
+          flash-review-frontend/output
+        key: ${{ runner.os }}-spago-${{ hashFiles('flash-review-frontend/spago.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-spago-
+
+    - name: Install dependencies
+      working-directory: ./flash-review-frontend
+      run: npm ci
+
+    # `spago test` compiles src/ as well as test/, so this typechecks the whole
+    # frontend in addition to running the suite.
+    - name: Run tests
+      working-directory: ./flash-review-frontend
+      run: npm test
