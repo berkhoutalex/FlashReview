@@ -68,7 +68,7 @@ Two defects are predicted by inspection and should surface when the suite runs. 
 
 **Interfaces:**
 - Consumes: nothing.
-- Produces: a genuinely executing test suite. Every later task depends on `stack test` being meaningful. Also produces `ServerSpec.testKey :: JWK`, used by Task 3 and Task 4.
+- Produces: a genuinely executing test suite. Every later task depends on `stack test` being meaningful. Also produces the top-level binding `testKey :: JWK` inside `test/ServerSpec.hs`. Tasks 3 and 4 both edit that same module in place, so `testKey` is already in scope for them — it does **not** need to be added to `ServerSpec`'s export list.
 
 - [ ] **Step 1: Replace `test/Spec.hs` with a delegation to `MainSpec`**
 
