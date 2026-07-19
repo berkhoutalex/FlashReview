@@ -21,23 +21,37 @@
 - Local-dev defaults must keep working when none of those variables are set: port `8081`, origin `http://localhost:3000`, the existing `PG*` variables, and an ephemeral generated JWT key.
 - Every backend task runs the full suite with `stack test`; it must be green before the commit step.
 
-## Environment Prerequisite
+## Environment
 
-Stack is **not installed** in the workspace where this plan was written, and `flash-review-backend/.stack-work` does not exist — the project has never been built here. None of the Haskell code in this plan has been compile-checked.
+Verified working on 2026-07-18. The baseline suite passes (5 examples, 0 failures) before any task begins.
 
-Before Task 0, confirm the toolchain works:
+**Stack is at `C:\ghcup\bin`, which is NOT on PATH.** Every shell that runs a stack command must prepend it first, or `stack` will appear not to exist:
 
-```bash
-cd flash-review-backend
-stack --version
-stack build
+```powershell
+$env:PATH = "C:\ghcup\bin;$env:PATH"
 ```
 
-If `stack` is missing, install it (https://docs.haskellstack.org/en/stable/install_and_upgrade/) before proceeding. The first `stack build` compiles the full dependency tree and can take 15–30 minutes.
+Stack is 3.11.1; GHC 9.8.4 is installed and matches lts-23.26. The dependency tree is already compiled — `stack build` and `stack test` are fast from here.
 
-You also need a local Postgres with a `flashcards_test` database for the test suite. `docker-compose.yml` in `flash-review-backend/` starts Postgres; `init_test_db.sh` / `init_test_db.ps1` create the test database.
+**Postgres is the native `postgresql-x64-17` Windows service** (auto-start, listening on 5432 over both IPv4 and IPv6), with credentials `postgres`/`postgres`. Databases `flashcards` and `flashcards_test` both exist.
 
-Expect to fix small compile errors in the Haskell code below. The types and signatures were verified against Hackage/Stackage documentation, but the code was never run.
+Do **not** run `docker-compose up` for Postgres on this machine. The native service already holds port 5432, so the container starts, reports healthy, and binds nothing — any database created inside it is invisible to the tests, which produces a confusing "database does not exist" failure against a server that is plainly running.
+
+`psql` is available at:
+
+```
+C:\Users\cindy\AppData\Local\Programs\stack\x86_64-windows\msys2-20240727\clang64\bin\psql.exe
+```
+
+Test environment variables:
+
+```
+PGHOST=localhost PGUSER=postgres PGPASSWORD=postgres PGDATABASE=flashcards_test
+```
+
+**One build-environment note:** `postgresql-libpq` needs libpq to compile. It was installed into Stack's MSYS2 via `pacman -S mingw-w64-clang-x86_64-postgresql`. If a clean rebuild ever fails at `postgresql-libpq-configure`, that package is missing.
+
+Expect to fix small compile errors in the Haskell code below. The types and signatures were verified against Hackage/Stackage documentation for the exact snapshot, and `resource-pool-0.4.0.0`, `servant-auth-server-0.4.9.0`, and GHC 9.8.4 were each confirmed against the resolved build plan — but the code itself was never compiled.
 
 ---
 
@@ -1521,11 +1535,14 @@ Expected: both succeed, producing `index.js`.
 
 - [ ] **Step 5: Verify the full flow end to end locally**
 
-Start the backend and the frontend in separate terminals:
+Start the backend and the frontend in separate terminals. Postgres is the native service and is already running — do not start a container (see Environment):
 
-```bash
-cd flash-review-backend && docker-compose up -d
-ALLOWED_ORIGINS=http://localhost:3000 stack exec flash-review-backend-exe
+```powershell
+$env:PATH = "C:\ghcup\bin;$env:PATH"
+cd flash-review-backend
+$env:ALLOWED_ORIGINS="http://localhost:3000"
+$env:JWT_SECRET="local-dev-secret"
+stack exec flash-review-backend-exe
 ```
 
 ```bash
