@@ -9,10 +9,9 @@ import Effect.Aff.Class (class MonadAff)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
-import Halogen.HTML.CSS as HCSS
-import CSS as CSS
-import CSS.Cursor (pointer)
+import Halogen.HTML.Properties as HP
 import Data.Array ((!!), length, null)
+
 type State =
   { queue :: Array Flashcard
   , currentIndex :: Int
@@ -30,7 +29,7 @@ data Action
 
 component :: forall q i o m. MonadAff m => H.Component q i o m
 component = H.mkComponent
-  { initialState: \_ -> 
+  { initialState: \_ ->
       { queue: []
       , currentIndex: 0
       , showAnswer: false
@@ -38,34 +37,23 @@ component = H.mkComponent
       , error: Nothing
       }
   , render
-  , eval: H.mkEval $ H.defaultEval 
+  , eval: H.mkEval $ H.defaultEval
       { handleAction = handleAction
       , initialize = Just Initialize
       }
   }
 
 render :: forall m. State -> H.ComponentHTML Action () m
-render state = 
-  HH.div
-    [ HCSS.style do
-        CSS.margin (CSS.px 20.0) (CSS.px 0.0) (CSS.px 20.0) (CSS.px 0.0)
-    ]
-    [ HH.h2 
-        [ HCSS.style do
-            CSS.color (CSS.rgb 33 150 243)
-        ]
-        [ HH.text "Review Cards" ]
+render state =
+  HH.div_
+    [ HH.h2 [ HP.class_ (HH.ClassName "page-heading") ] [ HH.text "Review Cards" ]
     , if state.loading
-        then HH.div_ [ HH.text "Loading..." ]
+        then HH.div [ HP.class_ (HH.ClassName "muted-text") ] [ HH.text "Loading..." ]
         else case state.error of
-          Just err -> HH.div 
-                        [ HCSS.style do
-                            CSS.color (CSS.rgb 220 0 0)
-                        ] 
-                        [ HH.text $ "Error: " <> err ]
-          Nothing -> 
+          Just err -> HH.div [ HP.class_ (HH.ClassName "alert alert-error") ] [ HH.text $ "Error: " <> err ]
+          Nothing ->
             if null state.queue
-              then HH.div_ [ HH.text "No cards to review!" ]
+              then HH.div [ HP.class_ (HH.ClassName "review-empty") ] [ HH.text "No cards to review!" ]
               else renderReview state
     ]
 
@@ -75,71 +63,40 @@ renderReview state =
     currentCard = state.queue !! state.currentIndex
   in
     case currentCard of
-      Nothing -> HH.div_ [ HH.text "Review complete!" ]
-      Just (Flashcard card) -> 
-        HH.div
-          [ HCSS.style do
-              CSS.padding (CSS.px 20.0) (CSS.px 20.0) (CSS.px 20.0) (CSS.px 20.0)
-              CSS.border CSS.solid (CSS.px 1.0) (CSS.rgb 200 200 200)
-              CSS.borderRadius (CSS.px 8.0) (CSS.px 8.0) (CSS.px 8.0) (CSS.px 8.0)
-              CSS.backgroundColor (CSS.rgb 250 250 250)
-          ]
-          [ HH.div 
-              [ HCSS.style do
-                  CSS.fontSize (CSS.px 24.0)
-                  CSS.marginBottom (CSS.px 20.0)
-              ] 
-              [ HH.text card.front ]
-          , if state.showAnswer
-              then 
-                HH.div_
-                  [ HH.div 
-                      [ HCSS.style do
-                          CSS.fontSize (CSS.px 24.0)
-                          CSS.marginTop (CSS.px 20.0)
-                          CSS.marginBottom (CSS.px 30.0)
-                          CSS.padding (CSS.px 15.0) (CSS.px 15.0) (CSS.px 15.0) (CSS.px 15.0)
-                          CSS.backgroundColor (CSS.rgb 240 240 240)
-                          CSS.border CSS.solid (CSS.px 1.0) (CSS.rgb 230 230 230)
-                          CSS.borderRadius (CSS.px 4.0) (CSS.px 4.0) (CSS.px 4.0) (CSS.px 4.0)
-                      ] 
-                      [ HH.text card.back ]
-                  , HH.div
-                      [ HCSS.style do
-                          CSS.display CSS.flex
-                          CSS.justifyContent CSS.spaceAround
-                          CSS.marginTop (CSS.px 20.0)
+      Nothing -> HH.div [ HP.class_ (HH.ClassName "review-empty") ] [ HH.text "Review complete!" ]
+      Just (Flashcard card) ->
+        HH.div_
+          [ HH.div
+              [ HP.class_ (HH.ClassName "review-progress") ]
+              [ HH.text $ show (state.currentIndex + 1) <> " of " <> show (length state.queue) ]
+          , HH.div
+              [ HP.class_ (HH.ClassName "card review-card") ]
+              [ HH.div [ HP.class_ (HH.ClassName "review-front") ] [ HH.text card.front ]
+              , if state.showAnswer
+                  then
+                    HH.div_
+                      [ HH.hr [ HP.class_ (HH.ClassName "review-divider") ]
+                      , HH.div [ HP.class_ (HH.ClassName "review-back") ] [ HH.text card.back ]
+                      , HH.div
+                          [ HP.class_ (HH.ClassName "review-ratings") ]
+                          [ ratingButton "btn-danger-outline" 1 "Hard"
+                          , ratingButton "btn-secondary" 3 "Good"
+                          , ratingButton "btn-success-outline" 5 "Easy"
+                          ]
                       ]
-                      [ ratingButton 1 "1 - Hard"
-                      , ratingButton 3 "3 - Good"
-                      , ratingButton 5 "5 - Easy"
+                  else
+                    HH.button
+                      [ HP.class_ (HH.ClassName "btn btn-primary btn-block")
+                      , HE.onClick \_ -> ShowAnswer
                       ]
-                  ]
-              else 
-                HH.button
-                  [ HE.onClick \_ -> ShowAnswer
-                  , HCSS.style do
-                      CSS.marginTop (CSS.px 20.0)
-                      CSS.padding (CSS.px 10.0) (CSS.px 20.0) (CSS.px 10.0) (CSS.px 20.0)
-                      CSS.backgroundColor (CSS.rgb 33 150 243)
-                      CSS.color (CSS.rgb 255 255 255)
-                      CSS.border CSS.solid (CSS.px 0.0) (CSS.rgb 33 150 243)
-                      CSS.borderRadius (CSS.px 4.0) (CSS.px 4.0) (CSS.px 4.0) (CSS.px 4.0)
-                      CSS.cursor pointer
-                  ]
-                  [ HH.text "Show Answer" ]
+                      [ HH.text "Show Answer" ]
+              ]
           ]
   where
-    ratingButton rating label =
+    ratingButton variantClass rating label =
       HH.button
-        [ HE.onClick \_ -> SubmitRating rating
-        , HCSS.style do
-            CSS.padding (CSS.px 8.0) (CSS.px 16.0) (CSS.px 8.0) (CSS.px 16.0)
-            CSS.backgroundColor (CSS.rgb 33 150 243)
-            CSS.color (CSS.rgb 255 255 255)
-            CSS.border CSS.solid (CSS.px 0.0) (CSS.rgb 33 150 243)
-            CSS.borderRadius (CSS.px 4.0) (CSS.px 4.0) (CSS.px 4.0) (CSS.px 4.0)
-            CSS.cursor pointer
+        [ HP.class_ (HH.ClassName ("btn " <> variantClass))
+        , HE.onClick \_ -> SubmitRating rating
         ]
         [ HH.text label ]
 
