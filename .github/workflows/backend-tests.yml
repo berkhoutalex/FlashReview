@@ -1,12 +1,7 @@
 name: Backend Tests
 
 on:
-  push:
-    branches: [ main ]
-    paths:
-      - 'flash-review-backend/**'
   pull_request:
-    branches: [ main ]
     paths:
       - 'flash-review-backend/**'
   workflow_dispatch:
