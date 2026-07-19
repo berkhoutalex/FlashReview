@@ -1,0 +1,81 @@
+:root {
+  /* Surfaces */
+  --bg: #0b0e14;
+  --surface: #11151d;
+  --surface-raised: #151a24;
+  --border: #1f2530;
+
+  /* Text */
+  --text: #e6e9ef;
+  --text-muted: #8b93a5;
+  --text-faint: #5b6272;
+
+  /* Accent (indigo) */
+  --accent: #7c9eff;
+  --accent-hover: #95afff;
+  --accent-muted: #2a3142;
+  --accent-contrast: #0b0e14;
+
+  /* Semantic */
+  --danger: #f4534a;
+  --danger-bg: #3a1f1f;
+  --success: #4ade80;
+  --success-bg: #1c3324;
+
+  /* Spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 40px;
+  --space-8: 48px;
+
+  /* Type */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, Helvetica, Arial, sans-serif;
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-base: 15px;
+  --text-lg: 17px;
+  --text-xl: 20px;
+  --text-2xl: 28px;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-bold: 700;
+
+  /* Radii & shadows */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4);
+
+  /* Motion */
+  --transition-fast: 120ms ease;
+
+  /* Layout */
+  --sidebar-width: 220px;
+}
+
+[data-theme="light"] {
+  --bg: #f7f8fa;
+  --surface: #ffffff;
+  --surface-raised: #ffffff;
+  --border: #e4e7ec;
+
+  --text: #1a1d24;
+  --text-muted: #5b6272;
+  --text-faint: #8b93a5;
+
+  --accent: #5b7cfa;
+  --accent-hover: #4a68e0;
+  --accent-muted: #e8ecff;
+  --accent-contrast: #ffffff;
+
+  --danger: #d92d20;
+  --danger-bg: #fdeceb;
+  --success: #1a9d5c;
+  --success-bg: #e7f8ee;
+
+  --shadow-card: 0 1px 3px rgba(16, 24, 40, 0.1), 0 1px 2px rgba(16, 24, 40, 0.06);
+}

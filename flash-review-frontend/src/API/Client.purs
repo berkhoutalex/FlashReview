@@ -11,7 +11,8 @@ import Data.Argonaut.Encode (toJsonString)
 import Data.Argonaut.Parser (jsonParser)
 import Data.Either (Either(..), either)
 import Data.UUID (toString) as UUID
-import Effect.Aff (Aff)
+import Effect.Aff (Aff, try)
+import Effect.Exception (Error, message)
 import Fetch (fetch, Method(..), Response, RequestCredentials(..))
 
 baseUrl :: String
@@ -95,27 +96,34 @@ getStats = do
 
 login :: UserCredentials -> Aff (Either String String)
 login credentials = do
-  let opts = 
-        { method: POST
-        , headers: { "Content-Type": "application/json" }
-        , body: toJsonString credentials
-        , credentials: Include 
-        }
-  response <- fetch (baseUrl <> "/login") opts
-  if response.ok
-    then do
-      text <- response.text
-      pure $ Right text
-    else
-      pure $ Left $ "Login failed with status: " <> show response.status
+  attempt <- try do
+    let opts =
+          { method: POST
+          , headers: { "Content-Type": "application/json" }
+          , body: toJsonString credentials
+          , credentials: Include
+          }
+    response <- fetch (baseUrl <> "/login") opts
+    if response.ok
+      then do
+        text <- response.text
+        pure $ Right text
+      else
+        pure $ Left $ "Login failed with status: " <> show response.status
+  pure $ either networkErrorLeft identity attempt
 
 signup :: UserCredentials -> Aff (Either String User)
 signup credentials = do
-  let opts = 
-        { method: POST
-        , headers: { "Content-Type": "application/json" }
-        , body: toJsonString credentials
-        , credentials: Include 
-        }
-  response <- fetch (baseUrl <> "/signup") opts
-  handleJsonResponse decodeJson response
+  attempt <- try do
+    let opts =
+          { method: POST
+          , headers: { "Content-Type": "application/json" }
+          , body: toJsonString credentials
+          , credentials: Include
+          }
+    response <- fetch (baseUrl <> "/signup") opts
+    handleJsonResponse decodeJson response
+  pure $ either networkErrorLeft identity attempt
+
+networkErrorLeft :: forall a. Error -> Either String a
+networkErrorLeft err = Left $ "Could not reach the server: " <> message err

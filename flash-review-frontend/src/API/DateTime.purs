@@ -8,6 +8,7 @@ import Data.Argonaut.Encode (class EncodeJson)
 import Data.DateTime (DateTime)
 import Data.Either (Either(..))
 import Data.Formatter.DateTime as Formatter
+import Data.List as List
 import Data.Maybe (Maybe(..))
 import Data.String as String
 import Data.String.Pattern (Pattern(..))
@@ -15,11 +16,33 @@ import Data.String.Pattern (Pattern(..))
 
 newtype SerializableDateTime = SerializableDateTime DateTime
 
+-- | The wire format we send to the backend: "YYYY-MM-DDTHH:mm:ss.SSSZ".
+-- |
+-- | Built as a command list rather than parsed from a pattern string so that
+-- | encoding is total. `Formatter.formatDateTime` returns an `Either` only
+-- | because it parses its pattern at runtime; `Formatter.format` takes an
+-- | already-parsed formatter and cannot fail.
+iso8601Formatter :: Formatter.Formatter
+iso8601Formatter = List.fromFoldable
+  [ Formatter.YearFull
+  , Formatter.Placeholder "-"
+  , Formatter.MonthTwoDigits
+  , Formatter.Placeholder "-"
+  , Formatter.DayOfMonthTwoDigits
+  , Formatter.Placeholder "T"
+  , Formatter.Hours24
+  , Formatter.Placeholder ":"
+  , Formatter.MinutesTwoDigits
+  , Formatter.Placeholder ":"
+  , Formatter.SecondsTwoDigits
+  , Formatter.Placeholder "."
+  , Formatter.Milliseconds
+  , Formatter.Placeholder "Z"
+  ]
+
 instance encodeJsonSerializableDateTime :: EncodeJson SerializableDateTime where
-  encodeJson (SerializableDateTime dt) = 
-    case Formatter.formatDateTime "YYYY-MM-DDTHH:mm:ss.SSSZ" dt of
-      Left err -> fromString $ "Invalid DateTime: " <> err
-      Right formatted -> fromString formatted
+  encodeJson (SerializableDateTime dt) =
+    fromString (Formatter.format iso8601Formatter dt)
 
 instance decodeJsonSerializableDateTime :: DecodeJson SerializableDateTime where
   decodeJson json = 

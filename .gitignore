@@ -22,3 +22,5 @@ cabal.project.local~
 .HTF/
 .ghc.environment.*
 /flash-review-backend/pgdata/
+.superpowers/
+.omc/
