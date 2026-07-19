@@ -6,6 +6,7 @@ module DatabaseSpec (spec) where
 
 import           API
 import           Control.Exception          (bracket)
+import qualified Data.ByteString.Char8      as BS8
 import           Data.Time.Clock            (UTCTime (..), diffTimeToPicoseconds,
                                               getCurrentTime, picosecondsToDiffTime)
 import           Data.UUID                  (UUID)
@@ -173,3 +174,13 @@ spec = do
 
         count' <- getDueCountDb conn (userId user)
         count' `shouldBe` 0
+
+  describe "Connection string resolution" $ do
+    it "uses DATABASE_URL verbatim when present" $ do
+      let url = "postgresql://u:p@ep-x-pooler.neon.tech/db?sslmode=require"
+      resolveConnectionString (Just url) testConfig
+        `shouldBe` BS8.pack url
+
+    it "falls back to the PG* config when DATABASE_URL is absent" $ do
+      resolveConnectionString Nothing testConfig
+        `shouldBe` makeConnectionString testConfig

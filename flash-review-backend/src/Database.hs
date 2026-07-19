@@ -22,6 +22,7 @@ module Database
   , authenticateUserDb
   , signupUserDb
   , makeConnectionString
+  , resolveConnectionString
   ) where
 
 import qualified API
@@ -71,6 +72,11 @@ makeConnectionString DatabaseConfig{..} = BS.pack $
   " dbname=" <> dbDatabase <>
   " client_encoding=UTF8"
 
+-- | Neon supplies a single connection URL that already carries @sslmode=require@.
+-- Local development and CI supply the individual @PG*@ variables instead.
+resolveConnectionString :: Maybe String -> DatabaseConfig -> ByteString
+resolveConnectionString (Just url) _   = BS.pack url
+resolveConnectionString Nothing    cfg = makeConnectionString cfg
 
 loadConfig :: IO DatabaseConfig
 loadConfig = do
@@ -92,10 +98,10 @@ connectDb :: IO PG.Connection
 connectDb = do
   putStrLn "Connecting to PostgreSQL database..."
 
+  mUrl <- lookupEnv "DATABASE_URL"
   config <- loadConfig
 
-  let connStr = makeConnectionString config
-
+  let connStr = resolveConnectionString mUrl config
 
   connectionResult <- try (PG.connectPostgreSQL connStr)
   case connectionResult of
