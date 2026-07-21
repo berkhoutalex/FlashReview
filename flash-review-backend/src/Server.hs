@@ -13,6 +13,7 @@ import qualified API                        (Flashcard (..), FlashcardAPI,
                                              UserJWT (..))
 import           Control.Monad.IO.Class     (liftIO)
 import qualified Data.ByteString.Lazy.Char8 as BSC
+import           Data.Pool                  (Pool, withResource)
 import           Data.UUID                  (UUID)
 import qualified Data.UUID.V4               (nextRandom)
 import qualified Database                   as DB
@@ -21,15 +22,15 @@ import           Servant                    hiding (BadPassword, NoSuchUser)
 import           Servant.Auth.Server
 
 data AppEnv = AppEnv
-  { appDbConn         :: PG.Connection
+  { appDbPool         :: Pool PG.Connection
   , appCookieSettings :: CookieSettings
   , appJWTSettings    :: JWTSettings
   }
 
 initializeApp :: IO AppEnv
 initializeApp = do
-  conn <- DB.connectDb
-  DB.setupSchema conn
+  pool <- DB.mkPool
+  withResource pool DB.setupSchema
   myKey <- generateKey
 
 
@@ -41,7 +42,7 @@ initializeApp = do
         cookieXsrfSetting = Nothing
       }
 
-  pure $ AppEnv conn cookieSettings jwtSettings
+  pure $ AppEnv pool cookieSettings jwtSettings
 
 
 server :: AppEnv -> Server (API.FlashcardAPI '[JWT])
@@ -61,16 +62,15 @@ server env =
 getCards :: AuthResult API.UserJWT -> AppEnv -> Handler [API.Flashcard]
 getCards authResult AppEnv{..} =
   case authResult of
-    Authenticated user -> do
-      liftIO $ DB.getAllCardsDb appDbConn (API.userJwtId user)
-
+    Authenticated user ->
+      liftIO $ withResource appDbPool $ \conn ->
+        DB.getAllCardsDb conn (API.userJwtId user)
     _ -> throwError err401
 
 createCard :: AuthResult API.UserJWT -> AppEnv -> API.FlashcardRequest -> Handler API.Flashcard
 createCard authResult AppEnv{..} flashcardReq =
   case authResult of
     Authenticated user ->
-
       let flashcard = API.Flashcard
             { API.id          = API.reqId flashcardReq
             , API.front       = API.reqFront flashcardReq
@@ -81,14 +81,14 @@ createCard authResult AppEnv{..} flashcardReq =
             , API.repetitions = API.reqRepetitions flashcardReq
             , API.ownerId     = API.userJwtId user
             }
-      in liftIO $ DB.createCardDb appDbConn flashcard
-    _               -> throwError err401
+      in liftIO $ withResource appDbPool $ \conn ->
+           DB.createCardDb conn flashcard
+    _ -> throwError err401
 
 updateCard :: AuthResult API.UserJWT -> AppEnv -> UUID -> API.FlashcardRequest -> Handler API.Flashcard
 updateCard authResult AppEnv{..} uuid flashcardReq =
   case authResult of
     Authenticated user ->
-
       let flashcard = API.Flashcard
             { API.id          = uuid
             , API.front       = API.reqFront flashcardReq
@@ -99,29 +99,33 @@ updateCard authResult AppEnv{..} uuid flashcardReq =
             , API.repetitions = API.reqRepetitions flashcardReq
             , API.ownerId     = API.userJwtId user
             }
-      in liftIO $ DB.updateCardDb appDbConn uuid flashcard
-    _               -> throwError err401
+      in liftIO $ withResource appDbPool $ \conn ->
+           DB.updateCardDb conn uuid flashcard
+    _ -> throwError err401
 
 deleteCard :: AuthResult API.UserJWT -> AppEnv -> UUID -> Handler NoContent
 deleteCard authResult AppEnv{..} uuid =
   case authResult of
     Authenticated user -> do
-      liftIO $ DB.deleteCardDb appDbConn uuid (API.userJwtId user)
+      liftIO $ withResource appDbPool $ \conn ->
+        DB.deleteCardDb conn uuid (API.userJwtId user)
       pure NoContent
     _ -> throwError err401
 
 getReviewQueue :: AuthResult API.UserJWT -> AppEnv -> Handler [API.Flashcard]
 getReviewQueue authResult AppEnv{..} =
   case authResult of
-    Authenticated user -> do
-      liftIO $ DB.getReviewCardsDb appDbConn (API.userJwtId user)
+    Authenticated user ->
+      liftIO $ withResource appDbPool $ \conn ->
+        DB.getReviewCardsDb conn (API.userJwtId user)
     _ -> throwError err401
 
 submitReview :: AuthResult API.UserJWT -> AppEnv -> UUID -> API.ReviewResult -> Handler NoContent
 submitReview authResult AppEnv{..} uuid result =
   case authResult of
     Authenticated user -> do
-      liftIO $ DB.processReviewDb appDbConn uuid (API.userJwtId user) result
+      liftIO $ withResource appDbPool $ \conn ->
+        DB.processReviewDb conn uuid (API.userJwtId user) result
       pure NoContent
     _ -> throwError err401
 
@@ -129,13 +133,15 @@ getStats :: AuthResult API.UserJWT -> AppEnv -> Handler API.Stats
 getStats authResult AppEnv{..} =
   case authResult of
     Authenticated user -> do
-      dueCount <- liftIO $ DB.getDueCountDb appDbConn (API.userJwtId user)
+      dueCount <- liftIO $ withResource appDbPool $ \conn ->
+        DB.getDueCountDb conn (API.userJwtId user)
       pure $ API.Stats dueCount
     _ -> throwError err401
 
 userLogin :: AppEnv -> API.LoginRequest -> Handler (Headers '[Header "Set-Cookie" SetCookie,Header "Set-Cookie" SetCookie] String)
 userLogin AppEnv{..} loginReq = do
-  mUser <- liftIO $ DB.authenticateUserDb appDbConn (API.loginUsername loginReq) (API.loginPassword loginReq)
+  mUser <- liftIO $ withResource appDbPool $ \conn ->
+    DB.authenticateUserDb conn (API.loginUsername loginReq) (API.loginPassword loginReq)
   case mUser of
     Nothing -> do
       throwError $ err401 {errBody = BSC.pack "email/password not found"}
@@ -169,4 +175,4 @@ userSignup AppEnv{..} signupReq = do
         , API.email = API.signupEmail signupReq
         , API.password = API.signupPassword signupReq
         }
-  liftIO $ DB.signupUserDb appDbConn user
+  liftIO $ withResource appDbPool $ \conn -> DB.signupUserDb conn user

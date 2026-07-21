@@ -12,6 +12,8 @@ import qualified Data.ByteString.Lazy        as BSL
 import qualified Data.ByteString.Lazy.Char8  as BSL8
 import qualified Data.CaseInsensitive        as CI
 import qualified Data.List                   as List
+import           Data.Pool                   (defaultPoolConfig, newPool,
+                                              setNumStripes, withResource)
 import           Data.Time.Clock             (getCurrentTime)
 import qualified Data.UUID.V4                as UUID
 import qualified Database.PostgreSQL.Simple  as PG
@@ -56,14 +58,17 @@ testKey = fromSecret (BS8.pack "flashreview-test-secret-not-for-production-use")
 makeTestApp :: IO Application
 makeTestApp = do
   let connStr = DB.makeConnectionString testConfig
-  conn <- PG.connectPostgreSQL connStr
+  pool <- newPool
+    $ setNumStripes (Just 1)
+    $ defaultPoolConfig (PG.connectPostgreSQL connStr) PG.close 30 5
 
   -- hspec-wai's `with` runs this action fresh before every `it`, so the
   -- database must be reset each time; otherwise the "testuser" signup below
   -- collides with the row the previous test left behind.
-  _ <- PG.execute_ conn "DROP TABLE IF EXISTS flashcards CASCADE"
-  _ <- PG.execute_ conn "DROP TABLE IF EXISTS users CASCADE"
-  DB.setupSchema conn
+  withResource pool $ \conn -> do
+    _ <- PG.execute_ conn "DROP TABLE IF EXISTS flashcards CASCADE"
+    _ <- PG.execute_ conn "DROP TABLE IF EXISTS users CASCADE"
+    DB.setupSchema conn
 
   userId <- UUID.nextRandom
   let user = User
@@ -72,7 +77,7 @@ makeTestApp = do
         , email =  "test@example.com"
         , password =  "password"
         }
-  _ <- DB.signupUserDb conn user
+  _ <- withResource pool $ \conn -> DB.signupUserDb conn user
 
   let jwtSettings = defaultJWTSettings testKey
   let cookieSettings = defaultCookieSettings
@@ -80,7 +85,7 @@ makeTestApp = do
         , cookieXsrfSetting = Nothing
         }
 
-  let env = AppEnv conn cookieSettings jwtSettings
+  let env = AppEnv pool cookieSettings jwtSettings
   let corsPolicy = simpleCorsResourcePolicy
         { corsRequestHeaders = [hContentType, hAuthorization]
         , corsMethods = [methodGet, methodPost, methodPut, methodDelete, methodOptions]
