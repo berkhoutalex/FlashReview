@@ -7,6 +7,7 @@ module DatabaseSpec (spec) where
 import           API
 import           Control.Exception          (bracket)
 import qualified Data.ByteString.Char8      as BS8
+import           Data.Pool                  (destroyAllResources, withResource)
 import           Data.Time.Clock            (UTCTime (..), diffTimeToPicoseconds,
                                               getCurrentTime, picosecondsToDiffTime)
 import           Data.UUID                  (UUID)
@@ -184,3 +185,19 @@ spec = do
     it "falls back to the PG* config when DATABASE_URL is absent" $ do
       resolveConnectionString Nothing testConfig
         `shouldBe` makeConnectionString testConfig
+
+  describe "Connection pool" $ do
+    it "serves a working connection" $ do
+      pool <- mkPool
+      n <- withResource pool $ \conn ->
+        PG.query_ conn "SELECT 1 :: int"
+      n `shouldBe` [PG.Only (1 :: Int)]
+      destroyAllResources pool
+
+    it "serves connections across sequential acquisitions" $ do
+      pool <- mkPool
+      a <- withResource pool $ \conn -> PG.query_ conn "SELECT 1 :: int"
+      b <- withResource pool $ \conn -> PG.query_ conn "SELECT 2 :: int"
+      a `shouldBe` [PG.Only (1 :: Int)]
+      b `shouldBe` [PG.Only (2 :: Int)]
+      destroyAllResources pool

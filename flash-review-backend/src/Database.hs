@@ -23,6 +23,8 @@ module Database
   , signupUserDb
   , makeConnectionString
   , resolveConnectionString
+  , mkPool
+  , Pool
   ) where
 
 import qualified API
@@ -35,6 +37,8 @@ import           Crypto.BCrypt                      (hashPasswordUsingPolicy,
 import           Data.ByteString                    (ByteString)
 import qualified Data.ByteString.Char8              as BS
 import           Data.Maybe                         (fromMaybe)
+import           Data.Pool                          (Pool, defaultPoolConfig,
+                                                     newPool, setNumStripes)
 import           Data.Text                          (Text)
 import qualified Data.Text.Encoding                 as TE
 import           Data.Time                          (UTCTime, addUTCTime,
@@ -110,6 +114,14 @@ connectDb = do
     Right conn -> do
       putStrLn "Connected to PostgreSQL successfully!"
       return conn
+
+-- | Neon's free tier drops idle connections when it scales compute to zero.
+-- A 30s idle timeout retires pooled connections before Neon does, and a single
+-- stripe keeps the 5-connection cap exact rather than per-stripe.
+mkPool :: IO (Pool PG.Connection)
+mkPool = newPool
+  $ setNumStripes (Just 1)
+  $ defaultPoolConfig connectDb PG.close 30 5
 
 withConnection :: (PG.Connection -> IO a) -> IO a
 withConnection = bracket connectDb PG.close
