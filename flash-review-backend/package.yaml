@@ -47,6 +47,7 @@ dependencies:
 - postgresql-simple
 - unliftio
 - bcrypt
+- jose
 
 ghc-options:
 - -Wall

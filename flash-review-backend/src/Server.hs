@@ -3,7 +3,7 @@
 {-# OPTIONS_GHC -Wno-name-shadowing #-}
 
 
-module Server( server, initializeApp, AppEnv(..) ) where
+module Server( server, initializeApp, resolveJwtKey, AppEnv(..) ) where
 
 import qualified API                        (Flashcard (..), FlashcardAPI,
                                              FlashcardRequest (..),
@@ -12,6 +12,8 @@ import qualified API                        (Flashcard (..), FlashcardAPI,
                                              Stats (..), User (..),
                                              UserJWT (..))
 import           Control.Monad.IO.Class     (liftIO)
+import           Crypto.JOSE.JWK            (JWK)
+import qualified Data.ByteString.Char8      as BS8
 import qualified Data.ByteString.Lazy.Char8 as BSC
 import           Data.Pool                  (Pool, withResource)
 import           Data.UUID                  (UUID)
@@ -20,6 +22,8 @@ import qualified Database                   as DB
 import qualified Database.PostgreSQL.Simple as PG
 import           Servant                    hiding (BadPassword, NoSuchUser)
 import           Servant.Auth.Server
+import           System.Environment         (lookupEnv)
+import           System.IO                  (hPutStrLn, stderr)
 
 data AppEnv = AppEnv
   { appDbPool         :: Pool PG.Connection
@@ -27,12 +31,23 @@ data AppEnv = AppEnv
   , appJWTSettings    :: JWTSettings
   }
 
+-- | A key generated per-process would invalidate every outstanding token on
+-- each cold start, and Render's free tier spins the service down when idle.
+resolveJwtKey :: Maybe String -> IO JWK
+resolveJwtKey (Just secret) = pure (fromSecret (BS8.pack secret))
+resolveJwtKey Nothing = do
+  hPutStrLn stderr
+    "WARNING: JWT_SECRET is not set; generating an ephemeral signing key. \
+    \All sessions will be invalidated when this process restarts."
+  generateKey
+
 initializeApp :: IO AppEnv
 initializeApp = do
   pool <- DB.mkPool
   withResource pool DB.setupSchema
-  myKey <- generateKey
 
+  mSecret <- lookupEnv "JWT_SECRET"
+  myKey <- resolveJwtKey mSecret
 
   let jwtSettings = defaultJWTSettings myKey
 

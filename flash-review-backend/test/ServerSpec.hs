@@ -25,6 +25,7 @@ import           API
 import           Database                    (DatabaseConfig (..))
 import qualified Database                    as DB
 import           Server                      (AppEnv (..), server)
+import qualified Server
 
 import           Crypto.JOSE.JWK             (JWK)
 import           Network.Wai.Middleware.Cors
@@ -288,3 +289,38 @@ spec = do
             [(CI.mk $ BS8.pack "Authorization", BS8.pack "Bearer " <> BSL.toStrict token)]
             BSL8.empty
             `shouldRespondWith` 200 { matchBody = bodyContains "dueToday" }
+
+  describe "JWT key resolution" $ do
+    it "accepts a token across simulated restarts when JWT_SECRET is set" $ do
+      let secret = "a-fixed-secret-value-padded-to-thirty-two-bytes-min"
+          claims = UserJWT
+            { userJwtId = read "123e4567-e89b-12d3-a456-426614174000"
+            , userJwtName = "testuser"
+            , userJwtEmail = "test@example.com"
+            }
+
+      keyBefore <- Server.resolveJwtKey (Just secret)
+      token <- makeJWT claims (defaultJWTSettings keyBefore) Nothing
+
+      keyAfter <- Server.resolveJwtKey (Just secret)
+      case token of
+        Left err -> expectationFailure ("could not sign: " ++ show err)
+        Right t  -> do
+          verified <- verifyJWT (defaultJWTSettings keyAfter) (BSL.toStrict t)
+          verified `shouldBe` Just claims
+
+    it "rejects a token signed under a different secret" $ do
+      let claims = UserJWT
+            { userJwtId = read "123e4567-e89b-12d3-a456-426614174000"
+            , userJwtName = "testuser"
+            , userJwtEmail = "test@example.com"
+            }
+
+      keyA <- Server.resolveJwtKey (Just "secret-a-padded-to-be-well-over-thirty-two-bytes")
+      keyB <- Server.resolveJwtKey (Just "secret-b-padded-to-be-well-over-thirty-two-bytes")
+      token <- makeJWT claims (defaultJWTSettings keyA) Nothing
+      case token of
+        Left err -> expectationFailure ("could not sign: " ++ show err)
+        Right t  -> do
+          verified <- verifyJWT (defaultJWTSettings keyB) (BSL.toStrict t)
+          verified `shouldBe` (Nothing :: Maybe UserJWT)
