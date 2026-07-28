@@ -1,0 +1,6 @@
+.stack-work/
+pgdata/
+*.hi
+*.o
+docs/
+README.md
