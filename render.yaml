@@ -1,0 +1,34 @@
+services:
+  - type: web
+    name: flash-review-backend
+    runtime: docker
+    plan: free
+    rootDir: flash-review-backend
+    dockerfilePath: ./Dockerfile
+    envVars:
+      # Neon pooled connection string. Set by hand in the dashboard.
+      - key: DATABASE_URL
+        sync: false
+      # Render generates a random value once and keeps it stable across
+      # deploys, which is exactly what JWT session continuity requires.
+      - key: JWT_SECRET
+        generateValue: true
+      # The static site's URL. Only known after its first deploy.
+      - key: ALLOWED_ORIGINS
+        sync: false
+
+  - type: web
+    name: flash-review-frontend
+    runtime: static
+    rootDir: flash-review-frontend
+    # PureScript has no compile-time env var mechanism, so the backend URL is
+    # substituted into the source before the build.
+    buildCommand: >-
+      npm install &&
+      sed -i "s|http://localhost:8081|$API_BASE_URL|" src/API/Client.purs &&
+      npm run build &&
+      npm run bundle
+    staticPublishPath: .
+    envVars:
+      - key: API_BASE_URL
+        sync: false
