@@ -2,6 +2,7 @@ module Components.App where
 
 import Prelude
 
+import API.Storage as Storage
 import CSS as CSS
 import CSS.Cursor (pointer)
 import Components.FlashcardList as FlashcardList
@@ -47,10 +48,13 @@ data Query a
   = IsLoggedIn (Boolean -> a)
 
 
-component :: forall input output. H.Component Query input output Aff
+component :: forall output. H.Component Query Boolean output Aff
 component =
   H.mkComponent
-    { initialState: const { currentView: LoginView, isLoggedIn: false }
+    { initialState: \hasToken ->
+        { currentView: if hasToken then FlashcardsView else LoginView
+        , isLoggedIn: hasToken
+        }
     , render
     , eval: H.mkEval $ H.defaultEval 
         { handleAction = handleAction
@@ -202,7 +206,8 @@ handleAction = case _ of
     Signup.GoToLogin ->
       H.modify_ \st -> st { currentView = LoginView }
   
-  Logout ->
+  Logout -> do
+    H.liftEffect Storage.clearToken
     H.modify_ \st -> st { isLoggedIn = false, currentView = LoginView }
 
 handleQuery :: forall a m output. MonadAff m => Query a -> H.HalogenM State Action Slots output m (Maybe a)
