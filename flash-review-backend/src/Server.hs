@@ -33,8 +33,18 @@ data AppEnv = AppEnv
 
 -- | A key generated per-process would invalidate every outstanding token on
 -- each cold start, and Render's free tier spins the service down when idle.
+--
+-- A secret shorter than 32 bytes makes jose's @bestJWSAlg@ fail with
+-- @KeySizeTooSmall@ at sign time, so @acceptLogin@ returns Nothing and every
+-- login answers an opaque 401. Fail fast at startup instead.
 resolveJwtKey :: Maybe String -> IO JWK
-resolveJwtKey (Just secret) = pure (fromSecret (BS8.pack secret))
+resolveJwtKey (Just secret)
+  | BS8.length keyBytes >= 32 = pure (fromSecret keyBytes)
+  | otherwise = fail
+      "JWT_SECRET must be at least 32 bytes (256 bits); a shorter secret \
+      \cannot sign HS256/384 tokens and would make every login fail. \
+      \Set a longer JWT_SECRET."
+  where keyBytes = BS8.pack secret
 resolveJwtKey Nothing = do
   hPutStrLn stderr
     "WARNING: JWT_SECRET is not set; generating an ephemeral signing key. \

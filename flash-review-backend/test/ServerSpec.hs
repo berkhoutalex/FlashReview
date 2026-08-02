@@ -324,3 +324,9 @@ spec = do
         Right t  -> do
           verified <- verifyJWT (defaultJWTSettings keyB) (BSL.toStrict t)
           verified `shouldBe` (Nothing :: Maybe UserJWT)
+
+    -- A JWT_SECRET under 32 bytes makes jose's bestJWSAlg fail with
+    -- KeySizeTooSmall at sign time, so login 401s opaquely. Fail fast at
+    -- startup instead, with a message that names the cause.
+    it "rejects a JWT_SECRET shorter than 32 bytes" $
+      Server.resolveJwtKey (Just "too-short") `shouldThrow` anyIOException
